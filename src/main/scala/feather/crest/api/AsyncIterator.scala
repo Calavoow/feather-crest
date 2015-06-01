@@ -1,8 +1,9 @@
 package feather.crest.api
 
 import com.typesafe.scalalogging.LazyLogging
+import feather.crest.util.Util
 
-import scala.collection.{mutable, IterableLike, TraversableLike}
+import scala.collection.{mutable, TraversableLike}
 import scala.concurrent.{ExecutionContext, Future}
 
 /**
@@ -40,22 +41,17 @@ abstract class AsyncIterator[+T](implicit ec: ExecutionContext)
 	}
 
 	override def foreach[U](f: Future[T] ⇒ U): Unit = {
-		var items = 0
-		def applyOnce() {
-			items += 1
-			if( items > 1 ) {
-				logger.debug("Multiple iterations.")
-			}
-
+		// var items = 0
+		// This is not tail recursive, but the stack is very small per call.
+		def applyEach() {
+			// items += 1
 			hasNext.foreach { hNext ⇒
 				if( hNext ) {
 					f(next)
-					applyOnce()
+					applyEach()
 				}
 			}
 		}
-		applyOnce()
-		Iterator.continually(f(next)).takeWhile(_ ⇒ hasNext)
 	}
 
 	override protected[this] def newBuilder: mutable.Builder[Future[T], AsyncIterator[T]] = ???

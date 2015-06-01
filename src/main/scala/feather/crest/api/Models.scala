@@ -4,6 +4,7 @@ import com.typesafe.scalalogging.LazyLogging
 import dispatch.StatusCode
 import spray.json.JsonFormat
 import concurrent.{ExecutionContext, Future}
+import feather.crest.api.CrestLink.CrestProtocol
 
 object Models extends LazyLogging {
 
@@ -95,10 +96,12 @@ object Models extends LazyLogging {
 	                  constellations: List[UnImplementedCrestLink],
 	                  marketSellOrders: UncompletedCrestLink) extends CrestContainer {
 		def marketBuyLink(itemType: CrestLink[ItemType]) : CrestLinkParams[MarketOrders] = {
+			import CrestProtocol.marketOrdersFormat
 			new CrestLinkParams[MarketOrders](marketBuyOrders.href, Map("type" → itemType.href))
 		}
 
 		def marketSellLink(itemType: CrestLink[ItemType]): CrestLinkParams[MarketOrders] = {
+			import CrestProtocol.marketOrdersFormat
 			new CrestLinkParams[MarketOrders](marketSellOrders.href, Map("type" → itemType.href))
 		}
 	}

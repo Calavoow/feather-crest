@@ -1,17 +1,17 @@
 package feather.crest.api
 
-import java.net.SocketTimeoutException
 import java.util.concurrent.TimeUnit
+
+import feather.crest.cache.{ExpiringCache, NoCache}
 
 import concurrent.ExecutionContext
 import scala.concurrent.duration.Duration
-import scala.util.{Try,Failure,Success}
 import com.typesafe.scalalogging.LazyLogging
-import eu.calavoow.app.api.CrestLink.CrestCommunicationException
-import eu.calavoow.app.api.Models._
+import feather.crest.api.Models._
 import spray.json._
 import dispatch._
 import scala.concurrent.Future
+import spray.caching.Cache
 
 object CrestLink {
 	case class CrestCommunicationException(errorCode: Int, msg: String) extends RuntimeException(msg)
@@ -71,12 +71,10 @@ case class CrestLink[T: JsonReader](href: String) extends LazyLogging {
 	 * @return The constructed Crest class.
 	 */
 	def follow(auth: Option[String], params: Map[String, String] = Map.empty)
-	          (implicit ec: ExecutionContext, cache: ScalaCache = NoCache): Future[T] = {
-		val cacheResult = cache.cache.get[T](cacheKey(params))
-		cacheResult.flatMap { cRes ⇒
-			cRes.map(Future.successful).orElse {
-				Some(request(auth, params))
-			}.get // There must be Some result now.
+	          (implicit ec: ExecutionContext, cache: ExpiringCache[T] = new NoCache[T]): Future[T] = {
+		val cacheResult = cache.get(cacheKey(params))
+		cacheResult.getOrElse {
+			request(auth, params)
 		}
 	}
 
@@ -89,10 +87,10 @@ case class CrestLink[T: JsonReader](href: String) extends LazyLogging {
 	 * @param params GET Parameters for the request.
 	 * @param ec The execution context for the Futures.
 	 * @param cache The cache to store the request result in.
-	 * @return
+	 * @return A model of T.
 	 */
 	def request(auth: Option[String], params: Map[String, String] = Map.empty)
-	          (implicit ec: ExecutionContext, cache: ScalaCache = NoCache): Future[T] = {
+	          (implicit ec: ExecutionContext, cache: ExpiringCache[T] = new NoCache[T]): Future[T] = {
 		logger.trace(s"Fetching with {}", auth)
 		// GET
 		val getRequest = url(href).secure
@@ -116,7 +114,8 @@ case class CrestLink[T: JsonReader](href: String) extends LazyLogging {
 			val cacheDuration = Duration(cacheTime, TimeUnit.SECONDS)
 			val jsonAst = response.getResponseBody.parseJson
 			val result = jsonAst.convertTo[T]
-			cache.cache.put(cacheKey(params), result, Some(cacheDuration))
+			val genValue = () => Future.successful(result)
+			cache.apply(cacheKey(params), genValue, cacheDuration)
 			result
 		}
 
@@ -151,12 +150,39 @@ case class CrestLink[T: JsonReader](href: String) extends LazyLogging {
  * @tparam T The type of CrestContainer to construct.
  */
 class CrestLinkParams[T: JsonReader](href: String, params: Map[String,String]) extends CrestLink[T](href) {
-	def follow(auth: Option[String])
-	          (implicit ec: ExecutionContext, cache: ScalaCache = NoCache) : Future[T] = {
-		follow(auth, params)
+	/**
+	 * Follow the crest link to construct a model of T.
+	 *
+	 * This function could not be overloaded without params, because of default arguments.
+	 *
+	 * @param auth The authentication key or None if unused.
+	 * @param params Optional parameters to add to the request. Using this should *not* be necessary!
+	 * @param ec The execution context for the Futures.
+	 * @param cache The cache to retrieve cached results from and store the request result in.
+	 * @return The constructed Crest class.
+	 */
+	override def follow(auth: Option[String], params: Map[String,String] = Map.empty)
+	          (implicit ec: ExecutionContext, cache: ExpiringCache[T] = new NoCache[T]) : Future[T] = {
+		// No user defined parameters.
+		if(params.isEmpty) super.follow(auth, this.params)
+		else super.follow(auth, params)
 	}
-	def request(auth: Option[String])
-	           (implicit ec: ExecutionContext, cache: ScalaCache = NoCache) : Future[T] = {
-		request(auth, params)
+
+	/**
+	 *  Ignore the cache and simply send a request.
+	 *
+	 * Note that the result of the request *is* stored in the cache,
+	 * and thus the function does have a side-effect if the cache is not a stub.
+	 * @param auth Authentication code of the EVE CREST endpoint.
+	 * @param params GET Parameters for the request.
+	 * @param ec The execution context for the Futures.
+	 * @param cache The cache to store the request result in.
+	 * @return A model of T.
+	 */
+	override def request(auth: Option[String], params: Map[String, String] = Map.empty)
+	           (implicit ec: ExecutionContext, cache: ExpiringCache[T] = new NoCache[T]) : Future[T] = {
+		// No user defined parameters.
+		if(params.isEmpty) super.request(auth, this.params)
+		else super.request(auth, params)
 	}
 }
