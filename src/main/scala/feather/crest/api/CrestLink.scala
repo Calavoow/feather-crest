@@ -131,6 +131,7 @@ case class CrestLink[T: JsonReader](href: String) extends LazyLogging {
 	 * @return A unique fake url for the given `href` and `params`.
 	 */
 	private def cacheKey(params: Map[String, String]) : String = {
+		// The key will look like query parameters (url?href?key=value&key2=value2)
 		href + "?" + params.map {
 			case (s1, s2) ⇒ s1 + "=" + s2
 		}.mkString("&")
@@ -169,7 +170,7 @@ class CrestLinkParams[T: JsonReader](href: String, params: Map[String,String]) e
 	}
 
 	/**
-	 *  Ignore the cache and simply send a request.
+	 * Ignore the cache and simply send a request.
 	 *
 	 * Note that the result of the request *is* stored in the cache,
 	 * and thus the function does have a side-effect if the cache is not a stub.

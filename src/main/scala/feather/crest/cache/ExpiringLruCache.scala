@@ -10,7 +10,9 @@ import scala.util.{Failure, Success}
 import scala.languageFeature.postfixOps
 
 /**
- * A thread-safe implementation of [[spray.caching.cache]].
+ * A thread-safe implementation of [[feather.crest.cache.ExpiringCache]].
+ *
+ * Implementation is largely based on [[spray.caching.SimpleLruCache]].
  * The cache has a defined maximum number of entries is can store. After the maximum capacity has been reached new
  * entries cause old ones to be evicted in a last-recently-used manner, i.e. the entries that haven't been accessed for
  * the longest time are evicted first.
@@ -21,14 +23,8 @@ import scala.languageFeature.postfixOps
  * Note that expired entries are only evicted upon next access (or by being thrown out by the capacity constraint), so
  * they might prevent gargabe collection of their values for longer than expected.
  *
- * @param timeToLive the time-to-live in millis, zero for disabling ttl-expiration
- * @param timeToIdle the time-to-idle in millis, zero for disabling tti-expiration
  */
-class ExpiringLruCache[V](maxCapacity: Long, initialCapacity: Int,
-                                timeToLive: Duration, timeToIdle: Duration) extends ExpiringCache[V] {
-	require(!timeToLive.isFinite || !timeToIdle.isFinite || timeToLive > timeToIdle,
-		s"timeToLive($timeToLive) must be greater than timeToIdle($timeToIdle)")
-
+class ExpiringLruCache[V](maxCapacity: Long, initialCapacity: Int) extends ExpiringCache[V] {
 	private val store = new ConcurrentLinkedHashMap.Builder[Any, Entry[V]]
 		.initialCapacity(initialCapacity)
 		.maximumWeightedCapacity(maxCapacity)
@@ -36,6 +32,11 @@ class ExpiringLruCache[V](maxCapacity: Long, initialCapacity: Int,
 
 	def get(key: Any): Option[Future[V]] = recGet(key)
 
+	/**
+	 * A private version of get, such that it can be optimized for tail recursion, but still overridden.
+	 * @param key
+	 * @return
+	 */
 	@tailrec
 	private def recGet(key: Any): Option[Future[V]] = store.get(key) match {
 		case null ⇒ None
