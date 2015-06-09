@@ -23,7 +23,7 @@ which is closely related to the intended interaction method of CREST.
 ## Examples
 Because of static typing we can navigate the interface in a checked manner.
 A session should usually start with fetching the Root object.
-```
+```scala
 import scala.concurrent.ExecutionContext.Implicits.global
 
 val auth = Some("abc123")
@@ -36,7 +36,7 @@ endpointHref.foreach(println)
 
 We can convert this to blocking code using the `Await` construct,
 in the process removing the Future.
-```
+```scala
 import scala.concurrent.Await
 import scala.concurrent.duration._
 
@@ -50,7 +50,7 @@ println(rootResult.crestEndpoint.href)
 ### Regions
 We can get region information by following a link to Regions of the Root class.
 Using Scala for-constructs, that looks as follows
-```
+```scala
 val root = ... // Some Future[Root] instance
 val region = for(
 	rootRes <- root; // Extract Root
@@ -64,7 +64,7 @@ val region = for(
 
 ### Item Types
 And another example of fetching item types, using `map` and `flatMap` instead.
-```
+```scala
 val root = ... // Some Future[Root] instance
 // Follow the link to the itemtype page.
 val itemTypes = root.flatMap(_.itemTypes.follow(None))
