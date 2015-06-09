@@ -105,11 +105,14 @@ case class CrestLink[T: JsonReader](href: String) extends LazyLogging {
 		val finalRequest = authedRequest <<? params
 
 		logger.trace(authedRequest.toString)
+		logger.trace(finalRequest.toRequest.getUri.toString)
 
 		val responseFut = Http(finalRequest)
 
 		val parsedResult = responseFut.map { response ⇒
 			logger.debug(s"Headers of request are: ${response.getHeaders()}")
+			logger.debug(response.getResponseBody)
+			logger.debug(response.getStatusCode + ": " + response.getStatusText)
 			val cacheTime = response.getHeader("Access-Control-Max-Age").toLong
 			val cacheDuration = Duration(cacheTime, TimeUnit.SECONDS)
 			val jsonAst = response.getResponseBody.parseJson

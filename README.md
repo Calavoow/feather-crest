@@ -21,6 +21,60 @@ This in turn allows further traversal through the CREST API,
 which is closely related to the intended interaction method of CREST.
 
 ## Examples
+Because of static typing we can navigate the interface in a checked manner.
+A session should usually start with fetching the Root object.
+```
+import scala.concurrent.ExecutionContext.Implicits.global
+
+val auth = Some("abc123")
+val root = Root.fetch(auth) // Future[Root]
+val endpointHref = root.map(_.crestEndpoint.href) // Future[String]
+// Lets print the contents of the Future.
+endpointHref.foreach(println)
+// Asynchonrously prints "https://crest-tq.eveonline.com/"
+```
+
+We can convert this to blocking code using the `Await` construct,
+in the process removing the Future.
+```
+import scala.concurrent.Await
+import scala.concurrent.duration._
+
+val root = Root.fetch(auth) // Future[Root]
+// Block for at most 10 seconds to get the Root.
+val rootResult = Await.result(root, 10 seconds) // Root
+// Then print the href to the endpoint
+println(rootResult.crestEndpoint.href)
+```
+
+### Regions
+We can get region information by following a link to Regions of the Root class.
+Using Scala for-constructs, that looks as follows
+```
+val root = ... // Some Future[Root] instance
+val region = for(
+	rootRes <- root; // Extract Root
+	region <- rootRes.regions.follow(auth) // Follow a CrestLink to Regions
+) yield {
+	// Asynchronously print the name of all regions
+	println(region.items.map(_.name).mkString(", "))
+	region
+}
+```
+
+### Item Types
+And another example of fetching item types, using `map` and `flatMap` instead.
+```
+val root = ... // Some Future[Root] instance
+// Follow the link to the itemtype page.
+val itemTypes = root.flatMap(_.itemTypes.follow(None))
+// Create a collection over all item type pages
+val allItemTypes = itemTypes.flatMap(_.authedIterator(None, retries=3).reduce)
+allItemTypes.map(_.foreach { itemTypePage =>
+	// Print each itemType name.
+	itemTypePage.items.foreach(itemType => println(itemType.name))
+})
+```
 
 ## Implementation
 

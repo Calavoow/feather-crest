@@ -113,7 +113,14 @@ object Models extends LazyLogging {
 	                     totalCount: Int,
 	                     pageCount_str: String,
 	                     previous: Option[CrestLink[ItemTypes]])
-		extends CrestContainer with AuthedAsyncIterable[ItemTypes]
+		extends CrestContainer with AuthedAsyncIterable[ItemTypes] {
+		def authedIterator(auth: Option[String], retries: Int = 1)
+		                  (implicit ec: ExecutionContext) = {
+			if(next.isDefined) logger.info(s"Itemtypes has next: $next")
+			// Cannot partially apply function, because of the implicit execution context.
+			this.paramsIterator(Map.empty)(auth, retries)
+		}
+	}
 
 	/**
 	 * TODO: Fill in this stub.

@@ -23,6 +23,13 @@ abstract class AsyncIterator[+T](implicit ec: ExecutionContext)
 
 	def next(): Future[T]
 
+	/**
+	 * Build an Iterable Collection over this traversable.
+	 *
+	 * Useful for applying more advanced functions, such as map, reduce, etc.
+	 *
+	 * @return
+	 */
 	def reduce : Future[Iterable[T]] = {
 		val iterableBuilder = Iterable.newBuilder[T]
 		def applyOnce() : Future[Iterable[T]] = {
