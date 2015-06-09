@@ -24,27 +24,17 @@ abstract class AsyncIterator[+T](implicit ec: ExecutionContext)
 	def next(): Future[T]
 
 	/**
-	 * Build an Iterable Collection over this traversable.
+	 * Build a [[scala.collection.Seq]] Collection over this traversable.
 	 *
 	 * Useful for applying more advanced functions, such as map, reduce, etc.
+	 * Inspired by [[scala.concurrent.Future.traverse]]
 	 *
 	 * @return
 	 */
-	def reduce : Future[Iterable[T]] = {
-		val iterableBuilder = Iterable.newBuilder[T]
-		def applyOnce() : Future[Iterable[T]] = {
-			hasNext.flatMap { hNext ⇒
-				if( hNext ) {
-					next().flatMap { n ⇒
-						iterableBuilder += n
-						applyOnce()
-					}
-				} else {
-					Future.successful(iterableBuilder.result())
-				}
-			}
-		}
-		applyOnce()
+	def traverse: Future[Seq[T]] ={
+		this.foldLeft(Future.successful(Seq.newBuilder[T])) { (fr, a) =>
+			for (r <- fr; b <- a) yield (r += b)
+		}.map(_.result())
 	}
 
 	override def foreach[U](f: Future[T] ⇒ U): Unit = {
@@ -54,11 +44,12 @@ abstract class AsyncIterator[+T](implicit ec: ExecutionContext)
 			// items += 1
 			hasNext.foreach { hNext ⇒
 				if( hNext ) {
-					f(next)
+					f(next())
 					applyEach()
 				}
 			}
 		}
+		applyEach()
 	}
 
 	override protected[this] def newBuilder: mutable.Builder[Future[T], AsyncIterator[T]] = ???
