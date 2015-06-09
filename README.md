@@ -26,8 +26,7 @@ A session should usually start with fetching the Root object.
 ```scala
 import scala.concurrent.ExecutionContext.Implicits.global
 
-val auth = Some("abc123")
-val root = Root.fetch(auth) // Future[Root]
+val root = Root.fetch(None) // Future[Root]
 val endpointHref = root.map(_.crestEndpoint.href) // Future[String]
 // Lets print the contents of the Future.
 endpointHref.foreach(println)
@@ -40,12 +39,15 @@ in the process removing the Future.
 import scala.concurrent.Await
 import scala.concurrent.duration._
 
-val root = Root.fetch(auth) // Future[Root]
+val root = Root.fetch(None) // Future[Root]
 // Block for at most 10 seconds to get the Root.
 val rootResult = Await.result(root, 10 seconds) // Root
 // Then print the href to the endpoint
 println(rootResult.crestEndpoint.href)
 ```
+
+For the following examples an `auth : Some[String]` variable is assumed,
+which contains a string of the authentication token used to authenticate to the CREST API.
 
 ### Regions
 We can get region information by following a link to Regions of the Root class.
@@ -67,9 +69,9 @@ And another example of fetching item types, using `map` and `flatMap` instead.
 ```scala
 val root = ... // Some Future[Root] instance
 // Follow the link to the itemtype page.
-val itemTypes = root.flatMap(_.itemTypes.follow(None))
+val itemTypes = root.flatMap(_.itemTypes.follow(auth))
 // Create a collection over all item type pages
-val allItemTypes = itemTypes.flatMap(_.authedIterator(None, retries=3).reduce)
+val allItemTypes = itemTypes.flatMap(_.authedIterator(auth, retries=3).reduce)
 allItemTypes.map(_.foreach { itemTypePage =>
 	// Print each itemType name.
 	itemTypePage.items.foreach(itemType => println(itemType.name))
