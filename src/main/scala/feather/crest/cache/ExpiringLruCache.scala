@@ -4,10 +4,10 @@ import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap
 import feather.crest.cache.ExpiringLruCache.Entry
 
 import scala.annotation.tailrec
-import scala.concurrent.{Promise, ExecutionContext, Future}
 import scala.concurrent.duration._
-import scala.util.{Failure, Success}
+import scala.concurrent.{ExecutionContext, Future, Promise}
 import scala.languageFeature.postfixOps
+import scala.util.{Failure, Success}
 
 /**
  * A thread-safe implementation of [[feather.crest.cache.ExpiringCache]].

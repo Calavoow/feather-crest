@@ -2,16 +2,15 @@ package feather.crest.api
 
 import java.util.concurrent.TimeUnit
 
-import feather.crest.cache.{ExpiringCache, NoCache}
-
-import concurrent.ExecutionContext
-import scala.concurrent.duration.Duration
 import com.typesafe.scalalogging.LazyLogging
-import feather.crest.api.Models._
-import spray.json._
 import dispatch._
-import scala.concurrent.Future
-import spray.caching.Cache
+import feather.crest.api.CrestLink.CrestCommunicationException
+import feather.crest.api.Models._
+import feather.crest.cache.{ExpiringCache, NoCache}
+import spray.json._
+
+import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.duration.Duration
 
 object CrestLink {
 	case class CrestCommunicationException(errorCode: Int, msg: String) extends RuntimeException(msg)
@@ -95,7 +94,11 @@ case class CrestLink[T: JsonReader](href: String) extends LazyLogging {
 		// GET
 		val getRequest = url(href).secure
 
-		val acceptRequest = getRequest.setHeader("Accept", "application/json, charset=utf-8")
+		val acceptRequest = getRequest.setHeaders(Map(
+			"Accept" -> Seq("application/json"),
+			"Content-Type" -> Seq("application/vnd.ccp.eve.Api-v3+json; charset=utf-8"),
+			"User-Agent" -> Seq("feather-crest/0.1")
+		))
 		// If the auth is set then add it as parameter.
 		val authedRequest = auth.foldLeft(acceptRequest)((req, authKey) ⇒ {
 			req.setHeader("Authorization", s"Bearer $authKey")
@@ -104,26 +107,33 @@ case class CrestLink[T: JsonReader](href: String) extends LazyLogging {
 		// Add the GET parameters
 		val finalRequest = authedRequest <<? params
 
-		logger.trace(authedRequest.toString)
+		logger.trace(s"Authedrequest string: ${authedRequest.toString}")
 		logger.trace(finalRequest.toRequest.getUri.toString)
 
 		val responseFut = Http(finalRequest)
 
 		val parsedResult = responseFut.map { response ⇒
-			logger.debug(s"Headers of request are: ${response.getHeaders()}")
-			logger.debug(response.getResponseBody)
-			logger.debug(response.getStatusCode + ": " + response.getStatusText)
-			val cacheTime = response.getHeader("Access-Control-Max-Age").toLong
-			val cacheDuration = Duration(cacheTime, TimeUnit.SECONDS)
-			val jsonAst = response.getResponseBody.parseJson
-			val result = jsonAst.convertTo[T]
-			val genValue = () => Future.successful(result)
-			cache.apply(cacheKey(params), genValue, cacheDuration)
-			result
+			response.getStatusCode match {
+				case 200 =>
+					logger.debug(s"Headers of request are: ${response.getHeaders()}")
+					logger.debug(response.getStatusCode + ": " + response.getStatusText)
+					val cacheTime = response.getHeader("Access-Control-Max-Age").toLong
+					val cacheDuration = Duration(cacheTime, TimeUnit.SECONDS)
+					val jsonAst = response.getResponseBody.parseJson
+					val result = jsonAst.convertTo[T]
+					val genValue = () => Future.successful(result)
+					cache.apply(cacheKey(params), genValue, cacheDuration)
+					result
+				case 401 =>
+					val message = s"Unauthorized authentication token. CREST response body: ${response.getResponseBody}"
+					logger.warn(message)
+					throw CrestCommunicationException(401, message)
+
+			}
 		}
 
 		parsedResult.onFailure {
-			case x ⇒ logger.error(s"Error following link: $finalRequest\n ${x.getMessage}")
+			case x ⇒ logger.warn(s"Error following link: $finalRequest\n ${x.getMessage}")
 		}
 		parsedResult
 	}

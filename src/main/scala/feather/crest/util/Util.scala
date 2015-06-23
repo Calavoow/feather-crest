@@ -1,7 +1,7 @@
 package feather.crest.util
 
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Try
-import concurrent.{ExecutionContext, Future}
 
 object Util {
 

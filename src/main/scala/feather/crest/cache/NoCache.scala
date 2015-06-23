@@ -1,7 +1,7 @@
 package feather.crest.cache
 
-import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration.Duration
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * A cache that does nothing.
