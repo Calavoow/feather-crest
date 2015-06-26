@@ -1,8 +1,11 @@
 package feather.crest.api
 
+import com.twitter.util.{Return, Promise}
 import feather.crest.util.Util
 
 import scala.concurrent.{Future, ExecutionContext}
+import com.twitter.concurrent.Spool
+import Spool.{*::, **::}
 
 /**
  * A trait for the Model classes which adds a method to construct iterables over the CREST.
@@ -37,35 +40,56 @@ trait AuthedAsyncIterable[T <: AuthedAsyncIterable[T]] {
 	def paramsIterator(params: Map[String, String] = Map.empty)
 	                  (auth: Option[String], retries: Int = 1)
 	                  (implicit ec: ExecutionContext)
-	: AsyncIterator[T] = {
+	: Spool[T] = {
+		def fill(currentPage: Future[T], rest: Promise[Spool[T]]) {
+			currentPage foreach { cPage =>
+				cPage.next match {
+					case Some(nextLink) =>
+						val nextPage = nextLink.follow(auth)
+						val next = new Promise[Spool[T]]
+						rest() = Return(cPage *:: next)
+						fill(nextPage, next)
+					case None =>
+						val emptySpool = new Promise[Spool[T]]
+						emptySpool() = Return(Spool.empty[T])
+						rest() = Return(cPage *:: emptySpool)
+				}
+			}
+		}
+		val rest = new Promise[Spool[T]]
+		fill(Future.successful(self), rest)
+		self *:: rest
+
+		/*
 		new AsyncIterator[T]() {
+			var firstPage: Boolean = true
 			var currentPage: Future[T] = Future.successful(self)
 
-			override def hasNext: Future[Boolean] = currentPage.map { page : T =>
-				// Check if it has a link to the next page.
+			override def hasNext: Future[Boolean] = currentPage.map { page =>
 				page.next.isDefined
 			}
 
 			override def next(): Future[T] = {
-				val nextPage = currentPage.flatMap { page =>
-					// Assume that it exists, and the page has a next link.
-					val nextPageLink = page.next.get
-					Util.retryFuture(retries) {
-						logger.debug(s"Following next link: $nextPageLink")
-						nextPageLink.follow(auth, params)
+				// The first next() should return the self, but not fetch a next page yet.
+				val newPage = if( firstPage ) {
+					firstPage = false
+					currentPage
+				} else {
+					// Otherwise follow the link to the next page.
+					currentPage.flatMap { page =>
+						// Assume the next link exists
+						val nextPageLink = page.next.get
+						Util.retryFuture(retries) {
+							logger.debug(s"Trying to follow next link: $nextPageLink")
+							nextPageLink.follow(auth, params)
+						}
 					}
 				}
-
-				currentPage = nextPage
-				nextPage
+				currentPage = newPage
+				newPage
 			}
-
 		}
+		*/
 	}
-}
-trait NoParamsAsyncIterable[T <: NoParamsAsyncIterable[T]] extends AuthedAsyncIterable[T] {
-	self: T ⇒
-	def authedIterator(auth: Option[String], retries: Int = 1)(implicit ec: ExecutionContext): AsyncIterator[T]
-	= paramsIterator(Map.empty)(auth, retries)
 }
 

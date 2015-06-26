@@ -26,6 +26,12 @@ abstract class AsyncIterator[T](implicit ec: ExecutionContext)
 
 	def hasNext: Future[Boolean]
 
+	/**
+	 * Get the next value from this asynchronous iterable, assumes that the current value has a [[next]].
+	 *
+	 * Use [[hasNext]] to check if the current value has a next.
+	 * @return The current value.
+	 */
 	def next(): Future[T]
 
 	/**
@@ -84,8 +90,8 @@ object AsyncIterator extends LazyLogging {
 
 			override def result(): AsyncIterator[A] = {
 				logger.trace("Creating result")
-				new AsyncIterator[A]() {
-					implicit val executionContext = ec
+				// Use the same execution context as the outer AsyncIterator.
+				new AsyncIterator[A] {
 					val iterator = buffer.iterator
 
 					override def next(): Future[A] = iterator.next()

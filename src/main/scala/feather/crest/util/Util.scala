@@ -2,6 +2,7 @@ package feather.crest.util
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Try
+import scala.util.control.NonFatal
 
 object Util {
 
@@ -16,7 +17,7 @@ object Util {
 		val firstTry = f
 		// Try recovering with f, `times` times.
 		Range(0,times).foldLeft(firstTry) { (cur, _) ⇒
-			cur.recoverWith({case _ ⇒ f})
+			cur.recoverWith({case NonFatal(ex) ⇒ f})
 		}
 	}
 
@@ -24,7 +25,7 @@ object Util {
 		val firstTry = f
 		// Try recovering with f, `times` times.
 		Range(0,times).foldLeft(firstTry) { (cur, _) ⇒
-			cur.recoverWith({case _ ⇒ f})
+			cur.recoverWith({case NonFatal(ex) ⇒ f})
 		}
 	}
 

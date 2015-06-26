@@ -7,11 +7,11 @@ import org.scalatest.{Matchers, FlatSpec}
 import Models._
 import scala.collection.TraversableLike
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
-import scala.concurrent.Await
+import scala.concurrent.{ExecutionContext, Future, Await}
 import scala.concurrent.duration._
 import scala.io.Source
 import scala.language.postfixOps
+import scala.util.{Success, Failure}
 
 class ModelSpec extends FlatSpec with Matchers with LazyLogging {
 	/**
@@ -28,8 +28,12 @@ class ModelSpec extends FlatSpec with Matchers with LazyLogging {
 
 	"Root" should "be fetchable without auth" in {
 		val root = Root.fetch(None)
-		val rootRes = Await.result(root, 10 seconds)
-		rootRes.crestEndpoint.href should be ("https://crest-tq.eveonline.com/")
+		root.onComplete {
+			case Failure(ex) => fail("Failed to fetch root", ex)
+			case Success(rootRes) =>
+				rootRes.crestEndpoint.href should be ("https://crest-tq.eveonline.com/")
+		}
+		Await.ready(root, 10 seconds)
 	}
 
 	it should "test" in {
@@ -45,16 +49,13 @@ class ModelSpec extends FlatSpec with Matchers with LazyLogging {
 		val allItemTypes = itemTypes.map(_.authedIterator(auth, retries=3))
 
 		val resItemTypes = Await.result(allItemTypes, 3 seconds)
-		val mappedItemtypes = resItemTypes.map({ itemType =>
-			itemType.onSuccess {
-				case x => logger.trace(s"User succes: $x")
-			}
-			itemType.map(_.items)
-		})(AsyncIterator.canBuildFrom[List[NamedCrestLink[ItemType]]])
+		val mappedItemtypes = resItemTypes.map{ itemType =>
+			logger.trace(s"User success: $itemType")
+			itemType.items
+		}
+		logger.info("Probably eager")
 		mappedItemtypes.foreach { mType =>
-			mType.onSuccess {
-				case x => logger.trace(s"Map success: $x")
-			}
+			logger.trace(s"Map success: $mType")
 		}
 
 		this.synchronized {
