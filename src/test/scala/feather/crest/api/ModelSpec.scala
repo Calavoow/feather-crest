@@ -1,17 +1,15 @@
 package feather.crest.api
 
-import java.io.{PrintWriter, File}
-
 import com.typesafe.scalalogging.LazyLogging
 import org.scalatest.{Matchers, FlatSpec}
 import Models._
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.{ExecutionContext, Future, Await}
+import scala.concurrent.Await
 import scala.concurrent.duration._
 import scala.io.Source
 import scala.language.postfixOps
 import scala.util.{Success, Failure}
-import TwitterConverters._
+import feather.crest.api.TwitterConverters._
 
 class ModelSpec extends FlatSpec with Matchers with LazyLogging {
 	/**

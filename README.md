@@ -65,18 +65,35 @@ val region = for(
 ```
 
 ### Item Types
-And another example of fetching item types, using `map` and `flatMap` instead.
+We give another example, but now of fetching item types using `map`, `flatMap` and `foreach` instead:
 ```scala
-val root = ... // Some Future[Root] instance
+import feather.crest.api.TwitterConverters._
+
+val root = Root.fetch(None) // Future[Root] instance.
 // Follow the link to the itemtype page.
-val itemTypes = root.flatMap(_.itemTypes.follow(auth))
-// Create a collection over all item type pages
-val allItemTypes = itemTypes.flatMap(_.authedIterator(auth, retries=3).reduce)
-allItemTypes.map(_.foreach { itemTypePage =>
-	// Print each itemType name.
-	itemTypePage.items.foreach(itemType => println(itemType.name))
-})
+val itemTypesPage = root.flatMap(_.itemTypes.follow(auth))
+/**
+ * The itemtypes are split over multiple pages (there are 30k+ of them), thus we create
+ * an asynchronous collection over all itemtype pages (a Twitter [[com.twitter.concurrent.Spool]])
+ * */
+val itemTypesSpool = itemTypesPage.map(_.authedIterator(auth, retries=3))
+// Flatten all itemTypes into one big list.
+val allItemTypes = itemTypesSpool.flatMap { itemType =>
+	// Make one large List containing all itemTypes
+	// (And implicitly convert Twitter Future -> Scala Future)
+	itemType.map(_.items).reduceLeft(_ ++ _)
+}
+allItemTypes.foreach{ itemTypes =>
+	// Lets print the first and last item type
+	println(itemTypes.head)
+	println(itemTypes.last)
+}
 ```
+The key feature here is the collection that is returned by `authedIterator`, the `Spool`.
+It is an asynchronous variant of the `Stream`, which iterates through pages of the CREST and stores the results.
+This kind of construct is necessary, because the number of item types is over 30,000
+such that CCP has split the item types over multiple pages / requests.
+We decided not to pull all pages all the time, to allow the user full control over the requests.
 
 ## Implementation
 
