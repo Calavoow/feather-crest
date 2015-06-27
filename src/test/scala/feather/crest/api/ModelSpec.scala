@@ -5,13 +5,13 @@ import java.io.{PrintWriter, File}
 import com.typesafe.scalalogging.LazyLogging
 import org.scalatest.{Matchers, FlatSpec}
 import Models._
-import scala.collection.TraversableLike
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{ExecutionContext, Future, Await}
 import scala.concurrent.duration._
 import scala.io.Source
 import scala.language.postfixOps
 import scala.util.{Success, Failure}
+import TwitterConverters._
 
 class ModelSpec extends FlatSpec with Matchers with LazyLogging {
 	/**
@@ -40,38 +40,28 @@ class ModelSpec extends FlatSpec with Matchers with LazyLogging {
 		import scala.concurrent.Await
 		import scala.concurrent.duration._
 
-		println(auth)
+		logger.info(s"Using authentication: $auth")
 
 		val root = Root.fetch(None) // Future[Root] instance.
 		// Follow the link to the itemtype page.
-		val itemTypes = root.flatMap(_.itemTypes.follow(auth))
-		// Create a collection over all item type pages
-		val allItemTypes = itemTypes.map(_.authedIterator(auth, retries=3))
-
-		val resItemTypes = Await.result(allItemTypes, 3 seconds)
-		val mappedItemtypes = resItemTypes.map{ itemType =>
-			logger.trace(s"User success: $itemType")
-			itemType.items
+		val itemTypesPage = root.flatMap(_.itemTypes.follow(auth))
+		/**
+		 * The itemtypes are split over multiple pages (there are 30k+ of them), thus we create
+		 * an asynchronous collection over all itemtype pages (a Twitter [[com.twitter.concurrent.Spool]])
+		 * */
+		val itemTypesSpool = itemTypesPage.map(_.authedIterator(auth, retries=3))
+		// Flatten all itemTypes into one big list.
+		val allItemTypes = itemTypesSpool.flatMap { itemType =>
+			// Make one large List containing all itemTypes
+			// (And implicitly convert Twitter Future -> Scala Future)
+			itemType.map(_.items).reduceLeft(_ ++ _)
 		}
-		logger.info("Probably eager")
-		mappedItemtypes.foreach { mType =>
-			logger.trace(s"Map success: $mType")
+		allItemTypes.foreach{ itemTypes =>
+			// Lets print the first and last item type
+			println(itemTypes.head)
+			println(itemTypes.last)
 		}
 
-		this.synchronized {
-			wait(60000)
-		}
-
-		// Block for at most 10 seconds to get the Root.
-//		val rootResult = Await.result(root, 30 seconds) // Root
-//		// Then print the href to the endpoint
-//		println(rootResult.crestEndpoint.href)
-//		root.foreach(r => println(r.regions.href))
-//		val region = for(rootRes <- root;
-//		    region <- rootRes.regions.follow(auth)) yield {
-//			println(region.items.map(_.name).mkString(","))
-//			region
-//		}
-//		Await.ready(region, 30 seconds)
+		Await.ready(allItemTypes, 30 seconds)
 	}
 }

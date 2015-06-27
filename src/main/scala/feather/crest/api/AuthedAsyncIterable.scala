@@ -59,37 +59,6 @@ trait AuthedAsyncIterable[T <: AuthedAsyncIterable[T]] {
 		val rest = new Promise[Spool[T]]
 		fill(Future.successful(self), rest)
 		self *:: rest
-
-		/*
-		new AsyncIterator[T]() {
-			var firstPage: Boolean = true
-			var currentPage: Future[T] = Future.successful(self)
-
-			override def hasNext: Future[Boolean] = currentPage.map { page =>
-				page.next.isDefined
-			}
-
-			override def next(): Future[T] = {
-				// The first next() should return the self, but not fetch a next page yet.
-				val newPage = if( firstPage ) {
-					firstPage = false
-					currentPage
-				} else {
-					// Otherwise follow the link to the next page.
-					currentPage.flatMap { page =>
-						// Assume the next link exists
-						val nextPageLink = page.next.get
-						Util.retryFuture(retries) {
-							logger.debug(s"Trying to follow next link: $nextPageLink")
-							nextPageLink.follow(auth, params)
-						}
-					}
-				}
-				currentPage = newPage
-				newPage
-			}
-		}
-		*/
 	}
 }
 
