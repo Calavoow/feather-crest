@@ -122,10 +122,9 @@ object Models extends LazyLogging {
 	}
 
 	/**
-	 * TODO: Fill in this stub.
-	 * @param description
+	 * An ItemType
 	 */
-	case class ItemType(description: String) extends CrestContainer
+	case class ItemType(name: String, description: String) extends CrestContainer
 
 	object MarketOrders {
 

@@ -39,7 +39,7 @@ object CrestLink {
 		implicit val itemTypesFormat: JsonFormat[ItemTypes] = lazyFormat(jsonFormat7(ItemTypes.apply))
 		implicit val itemTypesCrestLinkFormat: JsonFormat[CrestLink[ItemTypes]] = jsonFormat(CrestLink[ItemTypes] _, "href")
 
-		implicit val itemTypeFormat: JsonFormat[ItemType] = lazyFormat(jsonFormat1(ItemType.apply))
+		implicit val itemTypeFormat: JsonFormat[ItemType] = lazyFormat(jsonFormat2(ItemType.apply))
 		implicit val itemTypeCrestLinkFormat: JsonFormat[NamedCrestLink[ItemType]] = jsonFormat(NamedCrestLink[ItemType] _, "href", "name")
 
 		implicit val marketOrdersFormat: JsonFormat[MarketOrders] = lazyFormat(jsonFormat7(MarketOrders.apply))
