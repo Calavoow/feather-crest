@@ -8,6 +8,10 @@ The main supported languages, however, will be Scala and Java.
 With Feather Crest you will be able to use the CREST API as if it were a local asynchronous data object.
 Requests to the API are sent asynchronously using Futures,
 which allow the user to easily manage a parallel environment.
+If you are not familiar with Futures, there is [an official Scala document](http://docs.scala-lang.org/overviews/core/futures.html) explaining them.
+This kind of approach is necessary,
+because it must not be the case that the application blocks on every API request,
+plus it possible to send many different request simultaneously.
 
 The CREST is modelled using small data classes, into which API results are stored.
 When these classes are instanced, the data is checked against the model typing.
@@ -34,7 +38,7 @@ endpointHref.foreach(println)
 ```
 
 We can convert this to blocking code using the `Await` construct,
-in the process removing the Future.
+which will get the result from the `Future` synchronously.
 ```scala
 import scala.concurrent.Await
 import scala.concurrent.duration._
@@ -95,6 +99,56 @@ It is an asynchronous variant of the `Stream`, which iterates through pages of t
 This kind of construct is necessary, because the number of item types is over 350,000
 such that CCP has split the item types over multiple pages / requests.
 We decided not to pull all pages all the time, to allow the user full control over the requests.
+
+## Async-Await
+Another excellent approach for handling Futures is using [scala-async](https://github.com/scala/async).
+One important feature of the CREST, is the availability of very recent market data
+that is updated every 5 minutes.
+As an example we get the market information of the Hammerhead II item.
+```scala
+// As usual get the Root first.
+val root = Root.fetch(None)
+
+val theForge : Future[Region] = async {
+	// Note: no Futures! But everything outside async will stil be asynchronous.
+	val aRoot: Root = await(root)
+	val regions: Regions = await(aRoot.regions.follow(auth))
+	// Note that I use {{.get}} here, which could throw an exception, but simplifies this example.
+	val forge: Region = await(regions.items.find(_.name == "The Forge").get.link.follow(auth))
+
+	/**
+	 * Oops, from the type of {{theForge.marketSellLink}} we see that we need an CrestLink[ItemType].
+	 * So lets handle that in _parallel_ (below).
+	 */
+	forge
+}
+
+// Get a link to the Itemtype of Hammerhead II's.
+val hammerhead2Link : Future[CrestLink[ItemType]] = async {
+	val aRoot : Root = await(root)
+	// Lets fetch the Hammerhead II
+	val itemTypes : ItemTypes = await(aRoot.itemTypes.follow(auth))
+	itemTypes.items.find(_.name == "Hammerhead II").get.link
+}
+
+// Now we put everything together and get the buy and sell orders.
+val buyAndSell : Future[(MarketOrders, MarketOrders)] = async {
+	val aTheForge : Region = await(theForge)
+	val aHammerhead2Link : CrestLink[ItemType] = await(hammerhead2Link)
+
+	val ham2Buy : MarketOrders = await(aTheForge.marketBuyLink(aHammerhead2Link).follow(auth))
+	val ham2Sell : MarketOrders = await(aTheForge.marketSellLink(aHammerhead2Link).follow(auth))
+
+	// Print the first buy and sell order
+	println(ham2Buy.items.head)
+	println(ham2Sell.items.head)
+
+	(ham2Buy, ham2Sell)
+}
+```
+
+It is also possible to do the above in one large `async` block,
+but like this the `Region` and `Itemtype` fetching occurs in parallel.
 
 ## Implementation
 

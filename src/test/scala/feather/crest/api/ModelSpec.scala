@@ -4,15 +4,15 @@ import com.typesafe.scalalogging.LazyLogging
 import org.scalatest.{Matchers, FlatSpec}
 import Models._
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Await
+import scala.concurrent.{Future, Await}
 import scala.concurrent.duration._
 import scala.io.Source
 import scala.language.postfixOps
 import scala.util.{Success, Failure}
-import scala.concurrent.Await
 import scala.concurrent.duration._
 import feather.crest.api.TwitterConverters._
 import feather.crest.api.CrestLink.CrestProtocol._
+import scala.async.Async.{async,await}
 
 class ModelSpec extends FlatSpec with Matchers with LazyLogging {
 	/**
@@ -65,7 +65,7 @@ class ModelSpec extends FlatSpec with Matchers with LazyLogging {
 		Await.ready(allItemTypes, 30 seconds)
 	}
 
-	it should "be able to fetch the itemtype page of an itemtype" in {
+	it should "be able to fetch the itemtype page of itemtype 2185" in {
 		val root = Root.fetch(None) // Future[Root] instance.
 		// Follow the link to the itemtype page.
 		for(
@@ -75,5 +75,49 @@ class ModelSpec extends FlatSpec with Matchers with LazyLogging {
 		) {
 			hammerhead2 should equal (ItemType("Hammerhead II", "Medium Scout Drone"))
 		}
+	}
+
+	it should "get market data for itemtype 2185" in {
+		// As usual get the Root first.
+		val root = Root.fetch(None)
+
+		val theForge : Future[Region] = async {
+			// Note: no Futures! But everything outside async will stil be asynchronous.
+			val aRoot: Root = await(root)
+			val regions: Regions = await(aRoot.regions.follow(auth))
+			// Note that I use {{.get}} here, which could throw an exception, but simplifies this example.
+			val forge: Region = await(regions.items.find(_.name == "The Forge").get.link.follow(auth))
+
+			/**
+			 * Oops, from the type of {{theForge.marketSellLink}} we see that we need an CrestLink[ItemType].
+			 * So lets handle that in _parallel_ (below).
+			 */
+			forge
+		}
+
+		// Get a link to the Itemtype of Hammerhead II's.
+		val hammerhead2Link : Future[CrestLink[ItemType]] = async {
+			val aRoot : Root = await(root)
+			// Lets fetch the Hammerhead II
+			val itemTypes : ItemTypes = await(aRoot.itemTypes.follow(auth))
+			itemTypes.items.find(_.name == "Hammerhead II").get.link
+		}
+
+		// Now we put everything together and get the buy and sell orders.
+		val buyAndSell : Future[(MarketOrders, MarketOrders)] = async {
+			val aTheForge : Region = await(theForge)
+			val aHammerhead2Link : CrestLink[ItemType] = await(hammerhead2Link)
+
+			val ham2Buy : MarketOrders = await(aTheForge.marketBuyLink(aHammerhead2Link).follow(auth))
+			val ham2Sell : MarketOrders = await(aTheForge.marketSellLink(aHammerhead2Link).follow(auth))
+
+			// Print the first buy and sell order
+			println(ham2Buy.items.head)
+			println(ham2Sell.items.head)
+
+			(ham2Buy, ham2Sell)
+		}
+
+		Await.ready(buyAndSell, 10 seconds)
 	}
 }

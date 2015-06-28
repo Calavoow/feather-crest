@@ -13,7 +13,7 @@ import scala.util.{Failure, Success}
  * A thread-safe implementation of [[feather.crest.cache.ExpiringCache]].
  *
  * Implementation is largely based on [[spray.caching.SimpleLruCache]].
- * The cache has a defined maximum number of entries is can store. After the maximum capacity has been reached new
+ * The cache has a defined maximum number of entries it can store. After the maximum capacity has been reached new
  * entries cause old ones to be evicted in a last-recently-used manner, i.e. the entries that haven't been accessed for
  * the longest time are evicted first.
  * In addition this implementation optionally supports time-to-live as well as time-to-idle expiration.
