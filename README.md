@@ -114,11 +114,13 @@ val theForge : Future[Region] = async {
 	val aRoot: Root = await(root)
 	val regions: Regions = await(aRoot.regions.follow(auth))
 	// Note that I use {{.get}} here, which could throw an exception, but simplifies this example.
-	val forge: Region = await(regions.items.find(_.name == "The Forge").get.link.follow(auth))
+	val forge: Region = await(regions.items.find(_.name == "The Forge").get
+		.link.follow(auth))
 
 	/**
-	 * Oops, from the type of {{theForge.marketSellLink}} we see that we need an CrestLink[ItemType].
-	 * So lets handle that in _parallel_ (below).
+	 * Oops, from the type of {{theForge.marketSellLink}}
+	 * we see that we need an CrestLink[ItemType],
+	 * so lets handle that in _parallel_ (below).
 	 */
 	forge
 }
@@ -136,8 +138,10 @@ val buyAndSell : Future[(MarketOrders, MarketOrders)] = async {
 	val aTheForge : Region = await(theForge)
 	val aHammerhead2Link : CrestLink[ItemType] = await(hammerhead2Link)
 
-	val ham2Buy : MarketOrders = await(aTheForge.marketBuyLink(aHammerhead2Link).follow(auth))
-	val ham2Sell : MarketOrders = await(aTheForge.marketSellLink(aHammerhead2Link).follow(auth))
+	val ham2Buy : MarketOrders = await(aTheForge.marketBuyLink(aHammerhead2Link)
+		.follow(auth))
+	val ham2Sell : MarketOrders = await(aTheForge.marketSellLink(aHammerhead2Link)
+		.follow(auth))
 
 	// Print the first buy and sell order
 	println(ham2Buy.items.head)
