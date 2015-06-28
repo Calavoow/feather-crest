@@ -85,7 +85,8 @@ class ModelSpec extends FlatSpec with Matchers with LazyLogging {
 			// Note: no Futures! But everything outside async will stil be asynchronous.
 			val aRoot: Root = await(root)
 			val regions: Regions = await(aRoot.regions.follow(auth))
-			// Note that I use {{.get}} here, which could throw an exception, but simplifies this example.
+			// Note that I use {{.get}} here, which could throw an exception,
+			// but simplifies this example.
 			val forge: Region = await(regions.items.find(_.name == "The Forge").get
 				.link.follow(auth))
 
