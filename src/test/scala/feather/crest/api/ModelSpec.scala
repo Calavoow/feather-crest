@@ -77,7 +77,7 @@ class ModelSpec extends FlatSpec with Matchers with LazyLogging {
 		}
 	}
 
-	it should "get market data for itemtype 2185" in {
+	it should "get market data for itemtype Hammerhead II" in {
 		// As usual get the Root first.
 		val root = Root.fetch(None)
 
@@ -120,6 +120,23 @@ class ModelSpec extends FlatSpec with Matchers with LazyLogging {
 			println(ham2Buy.items.head)
 			println(ham2Sell.items.head)
 
+			// Invariant properties of the order
+			def invariantOrder(item : MarketOrders.Item): Unit = {
+				item.volume should be > 0L
+				item.price should be > 0D
+				item.minVolume should be > 0L
+				item.`type`.name == "Hammerhead II"
+			}
+
+			ham2Buy.items should not be empty // There are always buy order in Jita
+			ham2Buy.items.foreach { buyItem =>
+				buyItem.buy should be (true)
+				invariantOrder(buyItem)
+			}
+			ham2Sell.items.foreach { sellItem =>
+				sellItem.buy should be (false)
+				invariantOrder(sellItem)
+			}
 			(ham2Buy, ham2Sell)
 		}
 

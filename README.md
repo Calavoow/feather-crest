@@ -77,7 +77,7 @@ val root = Root.fetch(None) // Future[Root] instance.
 // Follow the link to the itemtype page.
 val itemTypesPage = root.flatMap(_.itemTypes.follow(auth))
 /**
- * The itemtypes are split over multiple pages (there are 30k+ of them),
+ * The itemtypes are split over multiple pages (there are 300k+ of them),
  * thus we create an asynchronous collection over all itemtype pages
  * (a Twitter [[com.twitter.concurrent.Spool]]).
  **/

@@ -1,4 +1,5 @@
 api.conf
+auth.txt
 # Worksheet files
 *.sc
 
