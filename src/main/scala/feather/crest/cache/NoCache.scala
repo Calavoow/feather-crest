@@ -19,4 +19,8 @@ class NoCache[V] extends ExpiringCache[V] {
 	override def size: Int = 0
 
 	override def remove(key: Any): Option[Future[V]] = None
+
+	override def keys: Set[Any] = Set.empty
+
+	override def ascendingKeys(limit: Option[Int]): Iterator[Any] = Iterator.empty
 }

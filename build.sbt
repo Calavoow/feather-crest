@@ -20,8 +20,8 @@ scalacOptions ++= Seq("-feature", "-unchecked")
 
 libraryDependencies ++= Seq(
 	"com.typesafe.scala-logging" %% "scala-logging" % "3.1.0",
-	"io.spray" %% "spray-json" % "1.3.1",
-	"io.spray" %% "spray-caching" % "1.3.1",
+	"io.spray" %% "spray-json" % "1.3.2",
+	"io.spray" %% "spray-caching" % "1.3.3",
 	"net.databinder.dispatch" %% "dispatch-core" % "0.11.3",
 	"com.twitter" %% "util-core" % "6.24.0",
 	// Explicitly depending on the following modules, because of conflicting dependencies

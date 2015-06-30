@@ -5,6 +5,7 @@ import feather.crest.cache.ExpiringLruCache.Entry
 
 import scala.annotation.tailrec
 import scala.concurrent.duration._
+import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future, Promise}
 import scala.languageFeature.postfixOps
 import scala.util.{Failure, Success}
@@ -85,6 +86,13 @@ class ExpiringLruCache[V](maxCapacity: Long, initialCapacity: Int) extends Expir
 		case entry if (isAlive(entry)) ⇒ Some(entry.future)
 		case entry                     ⇒ None
 	}
+
+	def keys: Set[Any] = store.keySet().asScala.toSet
+
+	def ascendingKeys(limit: Option[Int] = None) =
+		limit.map { lim ⇒ store.ascendingKeySetWithLimit(lim) }
+			.getOrElse(store.ascendingKeySet())
+			.iterator().asScala
 
 	def clear(): Unit = { store.clear() }
 

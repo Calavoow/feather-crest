@@ -39,7 +39,6 @@ object Models extends LazyLogging {
 
 	object Root {
 		def fetch(auth: Option[String])(implicit ec: ExecutionContext): Future[Root] = {
-			import CrestLink.CrestProtocol._
 			// The only "static" CREST URL.
 			val endpoint = "https://crest-tq.eveonline.com/"
 			CrestLink[Root](endpoint).follow(auth)
