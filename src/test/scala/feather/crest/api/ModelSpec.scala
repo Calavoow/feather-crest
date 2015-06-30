@@ -1,6 +1,7 @@
 package feather.crest.api
 
 import com.typesafe.scalalogging.LazyLogging
+import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{Matchers, FlatSpec}
 import Models._
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -8,13 +9,14 @@ import scala.concurrent.{Future, Await}
 import scala.concurrent.duration._
 import scala.io.Source
 import scala.language.postfixOps
+import scala.util.control.NonFatal
 import scala.util.{Success, Failure}
 import scala.concurrent.duration._
 import feather.crest.api.TwitterConverters._
 import feather.crest.api.CrestLink.CrestProtocol._
 import scala.async.Async.{async,await}
 
-class ModelSpec extends FlatSpec with Matchers with LazyLogging {
+class ModelSpec extends FlatSpec with Matchers with ScalaFutures with LazyLogging {
 	/**
 	 * Try to read auth.txt in the test/resources folder.
 	 *
@@ -28,16 +30,16 @@ class ModelSpec extends FlatSpec with Matchers with LazyLogging {
 	}
 
 	"Root" should "be fetchable without auth" in {
+		implicit val patienceConfig = PatienceConfig(timeout = 3 seconds)
 		val root = Root.fetch(None)
-		root.onComplete {
-			case Failure(ex) => fail("Failed to fetch root", ex)
-			case Success(rootRes) =>
-				rootRes.crestEndpoint.href should be ("https://crest-tq.eveonline.com/")
+		whenReady(root) { readyRoot =>
+			readyRoot.crestEndpoint.href should be ("https://crest-tq.eveonline.com/")
 		}
-		Await.ready(root, 10 seconds)
 	}
 
 	it should "be able to fetch itemtypes" in {
+		implicit val patienceConfig = PatienceConfig(timeout = 10 seconds)
+
 
 		logger.info(s"Using authentication: $auth")
 
@@ -56,28 +58,32 @@ class ModelSpec extends FlatSpec with Matchers with LazyLogging {
 			// (And implicitly convert Twitter Future -> Scala Future)
 			itemType.map(_.items).reduceLeft(_ ++ _)
 		}
-		allItemTypes.foreach { itemTypes =>
+		whenReady(allItemTypes) { itemTypes =>
 			// Lets check the first item type and the size
 			itemTypes.head should equal (NamedCrestLink[ItemType]("https://crest-tq.eveonline.com/types/0/","#System"))
 			itemTypes.size should be >(350000)
 		}
-
-		Await.ready(allItemTypes, 30 seconds)
 	}
 
-	it should "be able to fetch the itemtype page of itemtype 2185" in {
+	it should "be able to fetch the itemtype page of itemtype 984" in {
+		implicit val patienceConfig = PatienceConfig(timeout = 5 seconds)
 		val root = Root.fetch(None) // Future[Root] instance.
 		// Follow the link to the itemtype page.
-		for(
+		val ham2 = for(
 			r <- root;
 			itemTypes <- r.itemTypes.follow(auth);
-			hammerhead2 <- itemTypes.items(2185).link.follow(auth)
-		) {
+			hammerhead2 <- itemTypes.items(984).link.follow(auth)
+		) yield {
+			hammerhead2
+		}
+
+		whenReady(ham2) { hammerhead2 =>
 			hammerhead2 should equal (ItemType("Hammerhead II", "Medium Scout Drone"))
 		}
 	}
 
 	it should "get market data for itemtype Hammerhead II" in {
+		implicit val patienceConfig = PatienceConfig(timeout = 10 seconds)
 		// As usual get the Root first.
 		val root = Root.fetch(None)
 
@@ -116,30 +122,30 @@ class ModelSpec extends FlatSpec with Matchers with LazyLogging {
 			val ham2Sell : MarketOrders = await(aTheForge.marketSellLink(aHammerhead2Link)
 				.follow(auth))
 
-			// Print the first buy and sell order
-			println(ham2Buy.items.head)
-			println(ham2Sell.items.head)
-
 			// Invariant properties of the order
-			def invariantOrder(item : MarketOrders.Item): Unit = {
-				item.volume should be > 0L
-				item.price should be > 0D
-				item.minVolume should be > 0L
-				item.`type`.name == "Hammerhead II"
-			}
-
-			ham2Buy.items should not be empty // There are always buy order in Jita
-			ham2Buy.items.foreach { buyItem =>
-				buyItem.buy should be (true)
-				invariantOrder(buyItem)
-			}
-			ham2Sell.items.foreach { sellItem =>
-				sellItem.buy should be (false)
-				invariantOrder(sellItem)
-			}
 			(ham2Buy, ham2Sell)
 		}
 
-		Await.ready(buyAndSell, 10 seconds)
+		def invariantOrder(item : MarketOrders.Item): Unit = {
+			item.volume should be > 0L
+			item.price should be > 0D
+			item.minVolume should be > 0L
+			item.`type`.name == "Hammerhead II"
+		}
+
+		whenReady(buyAndSell) {
+			case (ham2Buy, ham2Sell) =>
+				ham2Buy.items should not be empty // There are always buy order in Jita
+				ham2Buy.items.foreach { buyItem =>
+					buyItem.buy should be (true)
+					invariantOrder(buyItem)
+				}
+				ham2Sell.items.foreach { sellItem =>
+					sellItem.buy should be (false)
+					invariantOrder(sellItem)
+				}
+
+				ham2Buy.items.map(_.price).max should be < ham2Sell.items.map(_.price).min
+		}
 	}
 }
