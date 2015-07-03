@@ -116,7 +116,7 @@ val theForge : Future[Region] = async {
 	// Note that I use {{.get}} here, which could throw an exception,
 	// but simplifies this example.
 	val forge: Region = await(regions.items.find(_.name == "The Forge").get
-		.link.follow(auth))
+		.follow(auth))
 
 	/**
 	 * Oops, from the type of {{theForge.marketSellLink}}
@@ -131,7 +131,7 @@ val hammerhead2Link : Future[CrestLink[ItemType]] = async {
 	val aRoot : Root = await(root)
 	// Lets fetch the Hammerhead II
 	val itemTypes : ItemTypes = await(aRoot.itemTypes.follow(auth))
-	itemTypes.items.find(_.name == "Hammerhead II").get.link
+	itemTypes.items.find(_.name == "Hammerhead II").get
 }
 
 // Now we put everything together and get the buy and sell orders.
