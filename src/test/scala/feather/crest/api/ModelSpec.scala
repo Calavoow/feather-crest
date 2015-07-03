@@ -54,14 +54,20 @@ class ModelSpec extends FlatSpec with Matchers with ScalaFutures with LazyLoggin
 		val itemTypesSpool = itemTypesPage.map(_.authedIterator(auth, retries=3))
 		// Flatten all itemTypes into one big list.
 		val allItemTypes = itemTypesSpool.flatMap { itemType =>
-			// Make one large List containing all itemTypes
+			// Make one large List containing all itemTypes, and its size for testing
 			// (And implicitly convert Twitter Future -> Scala Future)
+			val totalCount = itemType.map(_.totalCount).head
 			itemType.map(_.items).reduceLeft(_ ++ _)
+				.map {
+				(totalCount, _)
+			}
 		}
-		whenReady(allItemTypes) { itemTypes =>
+		whenReady(allItemTypes) { case (totalCount, itemTypes) =>
 			// Lets check the first item type and the size
 			itemTypes.head should equal (NamedCrestLink[ItemType]("https://crest-tq.eveonline.com/types/0/","#System"))
-			itemTypes.size should be >(350000)
+			val duplicates = itemTypes.groupBy(identity).collect { case (x, ys) if ys.size > 1 => x }
+			duplicates.foreach(println)
+			itemTypes.size should equal (totalCount)
 		}
 	}
 
@@ -72,7 +78,7 @@ class ModelSpec extends FlatSpec with Matchers with ScalaFutures with LazyLoggin
 		val ham2 = for(
 			r <- root;
 			itemTypes <- r.itemTypes.follow(auth);
-			hammerhead2 <- itemTypes.items(984).link.follow(auth)
+			hammerhead2 <- itemTypes.items(984).follow(auth)
 		) yield {
 			hammerhead2
 		}
@@ -94,7 +100,7 @@ class ModelSpec extends FlatSpec with Matchers with ScalaFutures with LazyLoggin
 			// Note that I use {{.get}} here, which could throw an exception,
 			// but simplifies this example.
 			val forge: Region = await(regions.items.find(_.name == "The Forge").get
-				.link.follow(auth))
+				.follow(auth))
 
 			/**
 			 * Oops, from the type of {{theForge.marketSellLink}}
@@ -109,7 +115,7 @@ class ModelSpec extends FlatSpec with Matchers with ScalaFutures with LazyLoggin
 			val aRoot : Root = await(root)
 			// Lets fetch the Hammerhead II
 			val itemTypes : ItemTypes = await(aRoot.itemTypes.follow(auth))
-			itemTypes.items.find(_.name == "Hammerhead II").get.link
+			itemTypes.items.find(_.name == "Hammerhead II").get
 		}
 
 		// Now we put everything together and get the buy and sell orders.

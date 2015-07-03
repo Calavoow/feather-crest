@@ -77,7 +77,7 @@ val root = Root.fetch(None) // Future[Root] instance.
 // Follow the link to the itemtype page.
 val itemTypesPage = root.flatMap(_.itemTypes.follow(auth))
 /**
- * The itemtypes are split over multiple pages (there are 300k+ of them),
+ * The itemtypes are split over multiple pages (there are 20k+ of them),
  * thus we create an asynchronous collection over all itemtype pages
  * (a Twitter [[com.twitter.concurrent.Spool]]).
  **/
@@ -96,7 +96,7 @@ allItemTypes.foreach{ itemTypes =>
 ```
 The key feature here is the collection that is returned by `authedIterator`, the `Spool`.
 It is an asynchronous variant of the `Stream`, which iterates through pages of the CREST and stores the results.
-This kind of construct is necessary, because the number of item types is over 350,000
+This kind of construct is necessary, because the number of item types is over 20,000
 such that CCP has split the item types over multiple pages / requests.
 We decided not to pull all pages all the time, to allow the user full control over the requests.
 

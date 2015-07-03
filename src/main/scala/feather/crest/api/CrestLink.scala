@@ -13,12 +13,30 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration.Duration
 
 object CrestLink {
+	def apply[T : JsonReader](href : String) = new CrestLink[T](href)
 	case class CrestCommunicationException(errorCode: Int, msg: String) extends RuntimeException(msg)
 
 	/**
 	 * Defines the JSON deserialisation protocols related to the Crest classes.
 	 */
 	object CrestProtocol extends DefaultJsonProtocol {
+		/**
+		 * Manually implemented json formatter for CrestLink, so that it can be a normal class for extension.
+		 */
+		implicit def crestLinkFormat[T : JsonFormat] : RootJsonFormat[CrestLink[T]] = new RootJsonFormat[CrestLink[T]] {
+			override def write(c: CrestLink[T]) = JsObject(
+				"href" -> JsString(c.href)
+			)
+			override def read(value: JsValue) = {
+				value.asJsObject.getFields("href") match {
+					case Seq(JsString(href)) =>
+						new CrestLink[T](href)
+					case _ => throw new DeserializationException("Crestlink expected")
+				}
+			}
+		}
+
+		implicit def namedCrestLinkFormat[T: JsonFormat]: JsonFormat[NamedCrestLink[T]] = jsonFormat(NamedCrestLink.apply[T] _, "href", "name")
 		implicit val unImplementedFormat: JsonFormat[UnImplementedCrestLink] = jsonFormat1(UnImplementedCrestLink)
 		implicit val unCompletedFormat: JsonFormat[UncompletedCrestLink] = jsonFormat1(UncompletedCrestLink)
 		implicit val unImplementedNamedFormat: JsonFormat[UnImplementedNamedCrestLink] = jsonFormat2(UnImplementedNamedCrestLink)
@@ -30,35 +48,35 @@ object CrestLink {
 		implicit val rootClientsFormat: JsonFormat[Root.Clients] = jsonFormat2(Root.Clients)
 
 		implicit val regionsFormat: JsonFormat[Regions] = lazyFormat(jsonFormat5(Regions.apply))
-		implicit val regionsCrestLinkFormat: JsonFormat[CrestLink[Regions]] = jsonFormat(CrestLink[Regions] _, "href")
-		implicit val regionsItemFormat: JsonFormat[NamedCrestLink[Region]] = jsonFormat(NamedCrestLink[Region] _, "href", "name")
 
 		implicit val regionFormat: JsonFormat[Region] = lazyFormat(jsonFormat5(Region.apply))
-		implicit val regionCrestLinkFormat: JsonFormat[CrestLink[Region]] = jsonFormat(CrestLink[Region] _, "href")
 
 		implicit val itemTypesFormat: JsonFormat[ItemTypes] = lazyFormat(jsonFormat7(ItemTypes.apply))
-		implicit val itemTypesCrestLinkFormat: JsonFormat[CrestLink[ItemTypes]] = jsonFormat(CrestLink[ItemTypes] _, "href")
 
 		implicit val itemTypeFormat: JsonFormat[ItemType] = lazyFormat(jsonFormat2(ItemType.apply))
-		implicit val itemTypeCrestLinkFormat: JsonFormat[NamedCrestLink[ItemType]] = jsonFormat(NamedCrestLink[ItemType] _, "href", "name")
 
 		implicit val marketOrdersFormat: JsonFormat[MarketOrders] = lazyFormat(jsonFormat7(MarketOrders.apply))
-		implicit val marketOrdersCrestLinkFormat: JsonFormat[CrestLink[MarketOrders]] = jsonFormat(CrestLink[MarketOrders] _, "href")
-		implicit val marketOrdersLocationFormat: JsonFormat[MarketOrders.Reference] = jsonFormat4(MarketOrders.Reference)
+		implicit val marketOrdersReferenceFormat: JsonFormat[MarketOrders.Reference] = jsonFormat4(MarketOrders.Reference)
 		implicit val MarketOrdersItemsFormat: JsonFormat[MarketOrders.Item] = jsonFormat17(MarketOrders.Item)
 
 		implicit val marketHistoryFormat: JsonFormat[MarketHistory] = lazyFormat(jsonFormat5(MarketHistory.apply))
-		implicit val marketHistoryCrestLinkFormat: JsonFormat[CrestLink[MarketHistory]] = jsonFormat(CrestLink[MarketHistory] _, "href")
 		implicit val marketHistoryItemsFormat: JsonFormat[MarketHistory.Item] = jsonFormat8(MarketHistory.Item)
+
+		implicit val itemCategoriesFormat: JsonFormat[ItemCategories] = lazyFormat(jsonFormat5(ItemCategories.apply))
+
+		implicit val itemCategoryFormat: JsonFormat[ItemCategory] = lazyFormat(jsonFormat3(ItemCategory.apply))
+
+		implicit val itemGroupsFormat: JsonFormat[ItemGroups] = lazyFormat(jsonFormat7(ItemGroups.apply))
+
+		implicit val itemGroupFormat: JsonFormat[ItemGroup] = lazyFormat(jsonFormat5(ItemGroup.apply))
 	}
 }
-
 /**
  * CrestLink contains a crest URL to follow, creating another Crest instance
  * @param href The Crest URL to the next link
  * @tparam T The type of CrestContainer to construct.
  */
-case class CrestLink[T: JsonReader](href: String) extends LazyLogging {
+class CrestLink[T: JsonReader](val href: String) extends LazyLogging {
 	/**
 	 * Follow executes a request to the CREST API to instantiate the linked Crest class T.
 	 *

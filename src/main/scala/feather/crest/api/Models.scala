@@ -14,27 +14,28 @@ object Models extends LazyLogging {
 	 */
 	sealed trait CrestContainer
 
-	case class UnImplementedCrestLink(href: String) extends CrestContainer
-
 	/**
 	 * To follow this crest link some construction is required.
 	 *
 	 * See the class methods to construct a normal CrestLink
-	 * @param href The link to follow.
 	 */
 	case class UncompletedCrestLink(href: String) extends CrestContainer
 
-	object NamedCrestLink{
-		implicit class NamedCrestLink2CrestLink[T: JsonFormat](nlink: NamedCrestLink[T]) {
-			def toCrestLink: CrestLink[T] = {
-				nlink.link
-			}
-		}
-	}
-	case class NamedCrestLink[T: JsonFormat](href: String, name: String) {
-		lazy val link = CrestLink[T](href)
-	}
+	/**
+	 * A CrestLink with a name field.
+	 * @param href The Crest URL to the next link
+	 * @param name The name field.
+	 * @tparam T The type of CrestContainer to construct.
+	 */
+	case class NamedCrestLink[T: JsonFormat](override val href : String, name: String) extends CrestLink[T](href)
 
+	/**
+	 * A CrestLink which has not been implemented by CCP.
+	 */
+	case class UnImplementedCrestLink(href: String) extends CrestContainer
+	/**
+	 * A CrestLink with a name that has not been implemented by CCP.
+	 */
 	case class UnImplementedNamedCrestLink(href: String, name: String) extends CrestContainer
 
 	object Root {
@@ -63,7 +64,7 @@ object Models extends LazyLogging {
 
 	case class Root(crestEndpoint: UnImplementedCrestLink,
 	                corporationRoles: UnImplementedCrestLink,
-	                itemGroups: UnImplementedCrestLink,
+	                itemGroups: CrestLink[ItemGroups],
 	                channels: UnImplementedCrestLink,
 	                corporations: UnImplementedCrestLink,
 	                alliances: UnImplementedCrestLink,
@@ -71,7 +72,7 @@ object Models extends LazyLogging {
 	                decode: UnImplementedCrestLink,
 	                battleTheatres: UnImplementedCrestLink,
 	                marketPrices: UnImplementedCrestLink,
-	                itemCategories: UnImplementedCrestLink,
+	                itemCategories: CrestLink[ItemCategories],
 	                regions: CrestLink[Regions],
 	                marketGroups: UnImplementedCrestLink,
 	                tournaments: UnImplementedCrestLink,
@@ -229,4 +230,32 @@ object Models extends LazyLogging {
 		                         totalCount: Int) extends CrestContainer
 
 
+
+	case class ItemCategories(totalCount_str: String,
+		                         items: List[NamedCrestLink[ItemCategory]],
+		                         pageCount: Int,
+		                         pageCount_str: String,
+		                         totalCount: Int) extends CrestContainer
+
+	case class ItemCategory(name: String,
+	                        groups: List[NamedCrestLink[ItemGroup]],
+	                        published: Boolean)
+
+	case class ItemGroups(
+		totalCount_str: String,
+		pageCount: Int,
+		items: List[NamedCrestLink[ItemGroup]],
+		next: Option[CrestLink[ItemGroups]],
+		previous: Option[CrestLink[ItemGroups]],
+		totalCount: Int,
+		pageCount_str: String
+	) extends CrestContainer with AuthedAsyncIterable[ItemGroups]
+
+	case class ItemGroup(
+		category: CrestLink[ItemCategory],
+		description: String,
+		name: String,
+		types: List[NamedCrestLink[ItemType]],
+		published: Boolean
+	)
 }

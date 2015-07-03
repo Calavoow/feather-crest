@@ -57,7 +57,10 @@ trait AuthedAsyncIterable[T <: AuthedAsyncIterable[T]] {
 			}
 		}
 		val rest = new Promise[Spool[T]]
-		fill(Future.successful(self), rest)
+		self.next match {
+			case Some(nxt) => fill(nxt.follow(auth), rest)
+			case None => rest() = Return(Spool.empty[T])
+		}
 		self *:: rest
 	}
 }
