@@ -53,7 +53,7 @@ println(rootResult.crestEndpoint.href)
 For the following examples an `auth : Some[String]` variable is assumed,
 which contains a string of the authentication token used to authenticate to the CREST API.
 
-### Regions
+### Regions (using for comprehensions)
 We can get region information by following a link to Regions of the Root class.
 Using Scala for-constructs, that looks as follows
 ```scala
@@ -68,7 +68,7 @@ val region = for(
 }
 ```
 
-### Item Types
+### Item Types (using `map` and `flatMap`)
 We give another example, but now of fetching item types using `map`, `flatMap` and `foreach` instead:
 ```scala
 import feather.crest.api.TwitterConverters._
@@ -100,7 +100,7 @@ This kind of construct is necessary, because the number of item types is over 20
 such that CCP has split the item types over multiple pages / requests.
 We decided not to pull all pages all the time, to allow the user full control over the requests.
 
-## Async-Await
+## Market Orders (using `scala-async`)
 Another excellent approach for handling Futures is using [scala-async](https://github.com/scala/async).
 One important feature of the CREST, is the availability of very recent market data
 that is updated every 5 minutes.
@@ -155,13 +155,26 @@ val buyAndSell : Future[(MarketOrders, MarketOrders)] = async {
 It is also possible to do the above in one large `async` block,
 but like this the `Region` and `Itemtype` fetching occurs in parallel.
 
-## Implementation
+**Where to find more examples:** Look in the `src/test/scala` folder for some running examples.
+They look slightly different than the previous examples, because of the way test suites handles Futures.
 
-## Features
+## Implementation
+The following models have been implemented
+
+1. Root CREST page
+1. Regions
+1. Items including
+	1. Types
+	1. Categories
+	1. Groups
+1. Market Orders
+1. Market History
+
+## Todo List 
 - [ ] Modelling the entire CREST API.
 - [ ] Creating tests for all models.
 - [ ] Caching of API request.
 - [ ] Improve interface.
-	- Authentication token.
-	- Hide disallowed methods.
-	- Asynchronous iterator.
+	- [ ] Authentication token.
+	- [ ] Hide disallowed methods.
+	- [x] Asynchronous iterator.
