@@ -154,4 +154,25 @@ class ModelSpec extends FlatSpec with Matchers with ScalaFutures with LazyLoggin
 				ham2Buy.items.map(_.price).max should be < ham2Sell.items.map(_.price).min
 		}
 	}
+
+	it should "get market history for Hammerhead II in Domain" in {
+		implicit val patienceConfig = PatienceConfig(timeout = 5 seconds)
+		val root = Root.fetch(auth)
+
+		val marketHistory = for(
+			r <- root;
+			itemLink <- r.itemTypes.follow(auth).map(_.items.find(_.name == "Hammerhead II").get);
+			regionLink <- r.regions.follow(auth).map(_.items.find(_.name == "Domain").get);
+			history <- MarketHistory.fetch(regionLink, itemLink)(auth)
+		) yield {
+			history
+		}
+
+		whenReady(marketHistory) { history =>
+			history.isDefined should equal(true)
+			val h = history.get
+			h.items.size should be > 100 // There should be many history items.
+			h.totalCount should equal(h.items.size)
+		}
+	}
 }

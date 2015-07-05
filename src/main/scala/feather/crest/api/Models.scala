@@ -1,5 +1,7 @@
 package feather.crest.api
 
+import java.util.NoSuchElementException
+
 import com.typesafe.scalalogging.LazyLogging
 import dispatch.StatusCode
 import spray.json.JsonFormat
@@ -206,19 +208,37 @@ object Models extends LazyLogging {
 		 * A Failure means that the request has not been completed (and may be retried).
 		 * A Success(None) means that there was no history for the item.
 		 * Any other result simply has a history for an item.
-		 * @param marketID The market ID.
-		 * @param typeID The type ID.
+		 * @param regionLink A CrestLink to the region for which to get market history.
+		 * @param typeLink A CrestLink to the itemtype for which to get market history.
 		 * @param auth The authentication code.
 		 * @return
 		 */
-		def fetch(marketID: Int, typeID: Int, auth: Option[String])
+		def fetch(regionLink: CrestLink[Region], typeLink: CrestLink[ItemType])
+		         (auth: Option[String], retries: Int = 1)
 		         (implicit ec: ExecutionContext): Future[Option[MarketHistory]] = {
-			import CrestLink.CrestProtocol._
-			val url = s"https://crest-tq.eveonline.com/market/$marketID/types/$typeID/history/"
-			CrestLink[MarketHistory](url).follow(auth).map(Some.apply).recover{
-				case StatusCode(404) ⇒
-					// If the given typeID does not have a history page (maybe because it's not on the market), return None.
-					None
+			val region = regionLink.href
+			val marketIdRegex = """.*/(\d+)/.*""".r
+			val marketId = marketIdRegex.findFirstMatchIn(region).map(_.group(1))
+
+			// Get the itemType link.
+			val itemType = typeLink.href
+			val itemTypeIdRegex = """.*/(\d+)/""".r
+			val typeId = itemTypeIdRegex.findFirstMatchIn(itemType).map(_.group(1))
+
+			(for(
+				mId <- marketId;
+				tId <- typeId
+			) yield {
+				val url = s"https://crest-tq.eveonline.com/market/$mId/types/$tId/history/"
+				CrestLink[MarketHistory](url).follow(auth).map(Some.apply).recover{
+					case StatusCode(404) ⇒
+						// If the given typeID does not have a history page
+						// (because it's not on the market), return a successful None.
+						None
+				}
+			}) getOrElse {
+				// Something went wrong in the regexes. Fail gracefully.
+				Future.failed(throw new NoSuchElementException("Something went wrong extracting the market ID or type ID."))
 			}
 		}
 	}
