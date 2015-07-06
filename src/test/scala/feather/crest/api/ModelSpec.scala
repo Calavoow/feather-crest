@@ -150,8 +150,6 @@ class ModelSpec extends FlatSpec with Matchers with ScalaFutures with LazyLoggin
 					sellItem.buy should be (false)
 					invariantOrder(sellItem)
 				}
-
-				ham2Buy.items.map(_.price).max should be < ham2Sell.items.map(_.price).min
 		}
 	}
 

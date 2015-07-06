@@ -38,8 +38,13 @@ object CrestLink {
 
 		implicit def namedCrestLinkFormat[T: JsonFormat]: JsonFormat[NamedCrestLink[T]] = jsonFormat(NamedCrestLink.apply[T] _, "href", "name")
 		implicit val unImplementedFormat: JsonFormat[UnImplementedCrestLink] = jsonFormat1(UnImplementedCrestLink)
-		implicit val unCompletedFormat: JsonFormat[UncompletedCrestLink] = jsonFormat1(UncompletedCrestLink)
 		implicit val unImplementedNamedFormat: JsonFormat[UnImplementedNamedCrestLink] = jsonFormat2(UnImplementedNamedCrestLink)
+		implicit val todoFormat: JsonFormat[TodoCrestLink] = jsonFormat1(TodoCrestLink)
+		implicit val todoNamedFormat: JsonFormat[TodoNamedCrestLink] = jsonFormat2(TodoNamedCrestLink)
+		implicit val unCompletedFormat: JsonFormat[UncompletedCrestLink] = jsonFormat1(UncompletedCrestLink)
+		implicit val linkFormat: JsonFormat[Link] = jsonFormat1(Link)
+		implicit val pictureFormat: JsonFormat[Picture] = jsonFormat4(Picture)
+		implicit val corporationFormat: JsonFormat[Corporation] = jsonFormat6(Corporation)
 
 		implicit val rootFormat: JsonFormat[Root] = lazyFormat(jsonFormat22(Root.apply))
 		implicit val rootMotdFormat: JsonFormat[Root.Motd] = jsonFormat3(Root.Motd)
@@ -69,6 +74,22 @@ object CrestLink {
 		implicit val itemGroupsFormat: JsonFormat[ItemGroups] = lazyFormat(jsonFormat7(ItemGroups.apply))
 
 		implicit val itemGroupFormat: JsonFormat[ItemGroup] = lazyFormat(jsonFormat5(ItemGroup.apply))
+
+		implicit val alliancesFormat: JsonFormat[Alliances] = lazyFormat(jsonFormat7(Alliances.apply))
+		implicit val allianceLinkFormat: JsonFormat[Alliances.AllianceLink] = lazyFormat(jsonFormat5(Alliances.AllianceLink))
+
+		implicit val allianceFormat: JsonFormat[Alliance] = jsonFormat14(Alliance.apply)
+		implicit val allianceCharacterFormat: JsonFormat[Alliance.Character] = jsonFormat7(Alliance.Character)
+
+		implicit val decodeFormat: JsonFormat[Decode] = lazyFormat(jsonFormat1(Decode))
+
+		implicit val characterFormat: JsonFormat[Character] = lazyFormat(jsonFormat22(Character.apply))
+		implicit val characterBloodlineFormat: JsonFormat[Character.BloodLine] = jsonFormat3(Character.BloodLine)
+		implicit val characterRaceFormat: JsonFormat[Character.Race] = jsonFormat3(Character.Race)
+
+		implicit val marketPricesFormat: JsonFormat[MarketPrices] = lazyFormat(jsonFormat5(MarketPrices.apply))
+		implicit val marketPricesTypeFormat: JsonFormat[MarketPrices.Type] = jsonFormat(MarketPrices.Type, "id_str", "href", "id", "name")
+		implicit val marketPricesItemFormat: JsonFormat[MarketPrices.Item] = jsonFormat3(MarketPrices.Item)
 	}
 }
 /**

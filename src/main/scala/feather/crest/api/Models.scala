@@ -40,6 +40,43 @@ object Models extends LazyLogging {
 	 */
 	case class UnImplementedNamedCrestLink(href: String, name: String) extends CrestContainer
 
+	/**
+	 * A CrestLink which has not been implemented by Feather-Crest.
+	 */
+	case class TodoCrestLink(href: String) extends CrestContainer
+	/**
+	 * A CrestLink which has not been implemented by Feather-Crest.
+	 */
+	case class TodoNamedCrestLink(href: String, name: String) extends CrestContainer
+
+	/**
+	 * A simple hyper-reference
+	 */
+	case class Link(href: String) extends CrestContainer
+
+	/**
+	 * A picture
+	 */
+	case class Picture (
+		`32x32`  : Link,
+		`64x64`  : Link,
+		`128x128`: Link,
+		`256x256`: Link
+	)
+
+	/**
+	 * An Eve Corporation
+	 */
+	case class Corporation(
+		name: String,
+		isNPC: Boolean,
+		href: String,
+		id_str: String,
+		logo: Picture,
+		id: Int
+	)
+
+
 	object Root {
 		def fetch(auth: Option[String])(implicit ec: ExecutionContext): Future[Root] = {
 			// The only "static" CREST URL.
@@ -64,16 +101,16 @@ object Models extends LazyLogging {
 
 	}
 
-	case class Root(crestEndpoint: UnImplementedCrestLink,
+	case class Root(crestEndpoint: CrestLink[Root],
 	                corporationRoles: UnImplementedCrestLink,
 	                itemGroups: CrestLink[ItemGroups],
 	                channels: UnImplementedCrestLink,
 	                corporations: UnImplementedCrestLink,
 	                alliances: UnImplementedCrestLink,
 	                itemTypes: CrestLink[ItemTypes],
-	                decode: UnImplementedCrestLink,
+	                decode: CrestLink[Decode],
 	                battleTheatres: UnImplementedCrestLink,
-	                marketPrices: UnImplementedCrestLink,
+	                marketPrices: CrestLink[MarketPrices],
 	                itemCategories: CrestLink[ItemCategories],
 	                regions: CrestLink[Regions],
 	                marketGroups: UnImplementedCrestLink,
@@ -277,5 +314,130 @@ object Models extends LazyLogging {
 		name: String,
 		types: List[NamedCrestLink[ItemType]],
 		published: Boolean
-	)
+)
+
+	object Alliances {
+		case class AllianceLink(
+		   id_str: String,
+		   shortName: String,
+		   override val href: String,
+		   id: Double,
+		   name: String
+		) extends CrestLink[Alliance](href)
+
+	}
+	case class Alliances(
+		totalCount_str: String,
+		pageCount: Int,
+		items: List[Alliances.AllianceLink],
+		next: Option[CrestLink[Alliances]],
+		totalCount: Int,
+		pageCount_str: String,
+		previous: Option[CrestLink[Alliances]]
+	) extends CrestContainer with AuthedAsyncIterable[Alliances]
+
+	object Alliance {
+		case class Character(
+			name: String,
+			isNPC: Boolean,
+			href: String,
+			capsuleer: UnImplementedCrestLink,
+			portrait: Picture,
+			id: Int,
+			id_str: String
+		)
+	}
+	case class Alliance(
+		startDate: String,
+		corporationsCount: Int,
+		description: String,
+		executorCorporation: Corporation,
+		corporationsCount_str: String,
+		deleted: Boolean,
+		creatorCorporation: Corporation,
+		url: String,
+		id_str: String,
+		creatorCharacter: Corporation,
+		corporations: List[Corporation],
+		shortName: String,
+		id: Int,
+		name: String
+	) extends CrestContainer
+
+
+	case class Decode(
+		character: CrestLink[Character]
+	) extends CrestContainer
+
+	object Character {
+
+		/**
+		 * The bloodline of a character.
+		 *
+		 * @param href Unimplemented
+		 */
+		case class BloodLine (
+			href: String,
+			id: Int,
+			id_str: String
+		)
+
+		/**
+		 * The race of the character.
+		 *
+		 * @param href Unimplemented
+		 */
+		case class Race (
+			href: String,
+			id: Int,
+			id_str: String
+		)
+	}
+
+	case class Character(
+		standings: TodoCrestLink,
+		bloodLine: Character.BloodLine,
+		gender_str: String,
+		`private`: UnImplementedCrestLink,
+		channels: UnImplementedCrestLink,
+		// href: String, // Refers to this page? Left out because of 23-arity
+		accounts: UnImplementedCrestLink,
+		portrait: Picture,
+		id: Int,
+		blocked: TodoCrestLink,
+		statistics: TodoCrestLink,
+		contacts: TodoCrestLink,
+		corporation: Corporation,
+		id_str: String,
+		mail: TodoCrestLink,
+		capsuleer: UnImplementedCrestLink,
+		vivox: UnImplementedCrestLink,
+		description: String,
+		notifications: TodoCrestLink,
+		name: String,
+		gender: Int,
+		race: Character.Race,
+		deposit: UnImplementedCrestLink
+	) extends CrestContainer
+
+	object MarketPrices {
+		case class Type(
+			id_str: String,
+			override val href: String,
+			id: Double,
+			name: String
+		) extends CrestLink[ItemType](href)
+		case class Item (
+			adjustedPrice: Double,
+			averagePrice: Double,
+			`type`: Type
+		)
+	}
+	case class MarketPrices(
+		totalCount_str: String,
+		items: List[MarketPrices.Item],
+		pageCount: Int,
+		pageCount_str: String,
+		totalCount: Int
+	) extends CrestContainer
 }
