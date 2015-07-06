@@ -113,16 +113,16 @@ object Models extends LazyLogging {
 	                marketPrices: CrestLink[MarketPrices],
 	                itemCategories: CrestLink[ItemCategories],
 	                regions: CrestLink[Regions],
-	                marketGroups: UnImplementedCrestLink,
-	                tournaments: UnImplementedCrestLink,
+	                marketGroups: TodoCrestLink,
+	                tournaments: TodoCrestLink,
 	                map: UnImplementedCrestLink,
-	                wars: UnImplementedCrestLink,
-	                incursions: UnImplementedCrestLink,
-	                authEndpoint: UnImplementedCrestLink,
+	                wars: TodoCrestLink,
+	                incursions: TodoCrestLink,
+	                authEndpoint: Link,
 	                industry: Root.Industry,
 	                clients: Root.Clients,
 	                time: UnImplementedCrestLink,
-	                marketTypes: UnImplementedCrestLink) extends CrestContainer
+	                marketTypes: TodoCrestLink) extends CrestContainer
 
 	case class Regions(totalCount_str: String,
 	                   items: List[NamedCrestLink[Region]],
@@ -296,7 +296,8 @@ object Models extends LazyLogging {
 
 	case class ItemCategory(name: String,
 	                        groups: List[NamedCrestLink[ItemGroup]],
-	                        published: Boolean)
+	                        published: Boolean
+	) extends CrestContainer
 
 	case class ItemGroups(
 		totalCount_str: String,
@@ -314,7 +315,7 @@ object Models extends LazyLogging {
 		name: String,
 		types: List[NamedCrestLink[ItemType]],
 		published: Boolean
-)
+	) extends CrestContainer
 
 	object Alliances {
 		case class AllianceLink(
@@ -433,6 +434,7 @@ object Models extends LazyLogging {
 			`type`: Type
 		)
 	}
+
 	case class MarketPrices(
 		totalCount_str: String,
 		items: List[MarketPrices.Item],
