@@ -173,7 +173,7 @@ The following models have been implemented
 ## Todo List 
 - [ ] Modelling the entire CREST API.
 - [ ] Creating tests for all models.
-- [ ] Caching of API request.
+- [ ] Caching of API requests.
 - [ ] Improve interface.
 	- [ ] Authentication token.
 	- [ ] Hide disallowed methods.

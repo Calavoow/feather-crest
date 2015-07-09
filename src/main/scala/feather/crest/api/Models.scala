@@ -30,6 +30,12 @@ object Models extends LazyLogging {
 	 * @tparam T The type of CrestContainer to construct.
 	 */
 	case class NamedCrestLink[T: JsonFormat](override val href : String, name: String) extends CrestLink[T](href)
+	case class IdNamedCrestLink[T: JsonFormat](
+		id_str: String,
+		override val href : String,
+		id: Int,
+		name: String
+	) extends CrestLink[T](href)
 
 	/**
 	 * A CrestLink which has not been implemented by CCP.
@@ -76,6 +82,14 @@ object Models extends LazyLogging {
 		id: Int
 	)
 
+	/**
+	 * A position in space.
+	 */
+	case class Position(
+		y: Long,
+		x: Long,
+		z: Long
+	)
 
 	object Root {
 		def fetch(auth: Option[String])(implicit ec: ExecutionContext): Future[Root] = {
@@ -84,17 +98,17 @@ object Models extends LazyLogging {
 			CrestLink[Root](endpoint).follow(auth)
 		}
 
-		case class Motd(dust: UnImplementedCrestLink,
-		                eve: UnImplementedCrestLink,
-		                server: UnImplementedCrestLink)
+		case class Motd(dust: Link,
+		                eve: Link,
+		                server: Link)
 
 		case class UserCounts(dust: Int,
 		                      dust_str: String,
 		                      eve: Int,
 		                      eve_str: String)
 
-		case class Industry(facilities: UnImplementedCrestLink,
-		                    systems: UnImplementedCrestLink)
+		case class Industry(facilities: CrestLink[IndustryFacilities],
+		                    systems: CrestLink[IndustrySystems])
 
 		case class Clients(dust: UnImplementedCrestLink,
 		                   eve: UnImplementedCrestLink)
@@ -166,19 +180,6 @@ object Models extends LazyLogging {
 	case class ItemType(name: String, description: String) extends CrestContainer
 
 	object MarketOrders {
-
-		/**
-		 * A reference to an item type.
-		 * @param id_str String of the id
-		 * @param href The link is not implemented yet in the EVE CREST.
-		 * @param id The id
-		 * @param name The name of the itemtype.
-		 */
-		case class Reference(id_str: String,
-		                     href: String,
-		                     id: Int,
-		                     name: String)
-
 		/**
 		 *
 		 * @param href The link has not been implemented yet in EVE CREST.
@@ -193,11 +194,11 @@ object Models extends LazyLogging {
 		                range: String,
 		                href: String,
 		                duration_str: String,
-		                location: Reference,
+		                location: IdNamedCrestLink[],
 		                duration: Int,
 		                minVolume_str: String,
 		                volumeEntered_str: String,
-		                `type`: Reference,
+		                `type`: IdNamedCrestLink[ItemType],
 		                id: Long,
 		                id_str: String)
 
@@ -294,9 +295,10 @@ object Models extends LazyLogging {
 		                         pageCount_str: String,
 		                         totalCount: Int) extends CrestContainer
 
-	case class ItemCategory(name: String,
-	                        groups: List[NamedCrestLink[ItemGroup]],
-	                        published: Boolean
+	case class ItemCategory(
+		name: String,
+		groups: List[NamedCrestLink[ItemGroup]],
+		published: Boolean
 	) extends CrestContainer
 
 	case class ItemGroups(
@@ -366,9 +368,7 @@ object Models extends LazyLogging {
 	) extends CrestContainer
 
 
-	case class Decode(
-		character: CrestLink[Character]
-	) extends CrestContainer
+	case class Decode(character: CrestLink[Character]) extends CrestContainer
 
 	object Character {
 
@@ -422,16 +422,10 @@ object Models extends LazyLogging {
 	) extends CrestContainer
 
 	object MarketPrices {
-		case class Type(
-			id_str: String,
-			override val href: String,
-			id: Double,
-			name: String
-		) extends CrestLink[ItemType](href)
 		case class Item (
 			adjustedPrice: Double,
 			averagePrice: Double,
-			`type`: Type
+			`type`: IdNamedCrestLink[ItemType]
 		)
 	}
 
@@ -442,4 +436,75 @@ object Models extends LazyLogging {
 		pageCount_str: String,
 		totalCount: Int
 	) extends CrestContainer
+
+	object IndustryFacilities {
+		case class ID(id: Int, id_str: String)
+		case class Item(
+			facilityID : Int,
+			solarSystem : ID,
+			name : String,
+			region : ID,
+			tax : Double,
+			facilityID_str : String,
+			owner: ID,
+			`type` : ID
+		)
+	}
+
+	case class IndustryFacilities (
+		totalCount_str: String,
+		items: List[IndustryFacilities.Item],
+		pageCount: Int,
+		pageCount_str: String,
+		totalCount: Int
+	) extends CrestContainer
+
+
+	object IndustrySystems {
+		case class SystemCostIndex (
+			costIndex: Double,
+			activityID: Int,
+			activityID_str: String,
+			activityName: String
+		)
+
+		case class Item (
+			systemCostIndices: List[SystemCostIndex],
+			solarSystem: IdNamedCrestLink[SolarSystem]
+		)
+	}
+	case class IndustrySystems (
+		totalCount_str: String,
+		items: List[IndustrySystems.Item],
+		pageCount: Int,
+		pageCount_str: String,
+		totalCount: Int
+	) extends CrestContainer
+
+	case class SolarSystem(
+		stats: UnImplementedCrestLink,
+		name: String,
+		securityStatus: Double,
+		securityClass: String,
+		href: String, // A link to itself?
+		planets: List[CrestLink[Planet]],
+		position: Position,
+		sovereignty: IdNamedCrestLink[Alliance],
+		constellation: CrestLink[Constellation]
+	) extends CrestContainer
+
+	case class Constellation(
+		position: Position,
+		region: CrestLink[Region],
+		systems: List[CrestLink[SolarSystem]],
+		name: String
+	) extends CrestContainer
+
+
+	case class Planet(
+		position: Position,
+		`type`: CrestLink[ItemType],
+		system: NamedCrestLink[SolarSystem],
+		name: String
+	)
 }
