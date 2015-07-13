@@ -30,6 +30,11 @@ object Models extends LazyLogging {
 	 * @tparam T The type of CrestContainer to construct.
 	 */
 	case class NamedCrestLink[T: JsonFormat](override val href : String, name: String) extends CrestLink[T](href)
+	case class IdCrestLink[T: JsonFormat](
+		id_str: String,
+		override val href : String,
+		id: Int
+	) extends CrestLink[T](href)
 	case class IdNamedCrestLink[T: JsonFormat](
 		id_str: String,
 		override val href : String,
@@ -128,9 +133,9 @@ object Models extends LazyLogging {
 	                itemCategories: CrestLink[ItemCategories],
 	                regions: CrestLink[Regions],
 	                marketGroups: CrestLink[MarketGroups],
-	                tournaments: TodoCrestLink,
+	                tournaments: CrestLink[Tournaments],
 	                map: UnImplementedCrestLink,
-	                wars: TodoCrestLink,
+	                wars: CrestLink[Wars],
 	                incursions: TodoCrestLink,
 	                authEndpoint: Link,
 	                industry: Root.Industry,
@@ -331,11 +336,6 @@ object Models extends LazyLogging {
 
 
 	object MarketTypes{
-		case class MarketGroup(
-			override val href: String,
-			id: Int,
-			id_str: String
-		) extends CrestLink[MarketGroup](href)
 		case class Type(
 			id_str: String,
 			override val href: String,
@@ -345,7 +345,7 @@ object Models extends LazyLogging {
 		) extends CrestLink[ItemType](href)
 
 		case class Items(
-			marketGroup: MarketGroup,
+			marketGroup: IdCrestLink[MarketGroup],
 			`type`: Type
 		)
 	}
@@ -565,6 +565,90 @@ object Models extends LazyLogging {
 		`type`: CrestLink[ItemType],
 		system: NamedCrestLink[SolarSystem],
 		name: String
+	) extends CrestContainer
+
+	case class Tournaments (
+		totalCount_str: String,
+		items: List[NamedCrestLink[Tournament]],
+		pageCount: Int,
+		pageCount_str: String,
+		totalCount: Int
+	) extends CrestContainer
+
+
+	object Tournament {
+		/**
+		 * Todo: Implement Entry link to team.
+		 */
+		case class Entry(
+			teamStats: TodoCrestLink,
+			href: String,
+			name: String
+		)
+	}
+	case class Tournament(
+		series: TodoCrestLink,
+		`type`: String,
+		name: String,
+		entries: List[Tournament.Entry]
 	)
 
+	case class Wars (
+		totalCount_str: String,
+		pageCount: Int,
+		items: List[IdCrestLink[War]],
+		next: Option[CrestLink[Wars]],
+		prev: Option[CrestLink[Wars]],
+		totalCount: Int,
+		pageCount_str: String
+	) extends CrestContainer with AuthedAsyncIterable[Wars]
+	
+	object War{
+		case class Ally (
+			name: String,
+			override val href: String,
+			id_str: String,
+			icon: Link,
+			id: Int
+		) extends CrestLink[Corporation](href)
+		case class Belligerent (
+			shipsKilled: Int,
+			shipsKilled_str: String,
+			name: String,
+			override val href: String,
+			id_str: String,
+			icon: Link,
+			id: Int,
+			iskKilled: Double
+		) extends CrestLink[Corporation](href)
+	}
+	case class War (
+		timeFinished: String,
+		openForAllies: Boolean,
+		allies: Option[List[War.Ally]],
+		timeStarted: String,
+		allyCount: Int,
+		timeDeclared: String,
+		aggressor: War.Belligerent,
+		mutual: Boolean,
+		allyCount_str: String,
+		killmails: String,
+		id_str: String,
+		defender: War.Belligerent,
+		id: Double
+	) {
+		def killMailLink: CrestLink[KillMails] = {
+			CrestLink[KillMails](killmails)
+		}
+	}
+
+	case class KillMails (
+		totalCount_str: String,
+		items: List[IdCrestLink[KillMail]],
+		next: Option[CrestLink[KillMails]],
+		prev: Option[CrestLink[KillMails]],
+		pageCount: Int,
+		pageCount_str: String,
+		totalCount: Int
+	) extends CrestContainer with AuthedAsyncIterable[KillMails]
 }
