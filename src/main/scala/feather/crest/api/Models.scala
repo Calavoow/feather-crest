@@ -127,7 +127,7 @@ object Models extends LazyLogging {
 	                marketPrices: CrestLink[MarketPrices],
 	                itemCategories: CrestLink[ItemCategories],
 	                regions: CrestLink[Regions],
-	                marketGroups: TodoCrestLink,
+	                marketGroups: CrestLink[MarketGroups],
 	                tournaments: TodoCrestLink,
 	                map: UnImplementedCrestLink,
 	                wars: TodoCrestLink,
@@ -136,7 +136,7 @@ object Models extends LazyLogging {
 	                industry: Root.Industry,
 	                clients: Root.Clients,
 	                time: UnImplementedCrestLink,
-	                marketTypes: TodoCrestLink) extends CrestContainer
+	                marketTypes: CrestLink[MarketTypes]) extends CrestContainer
 
 	case class Regions(totalCount_str: String,
 	                   items: List[NamedCrestLink[Region]],
@@ -147,7 +147,7 @@ object Models extends LazyLogging {
 	case class Region(description: String,
 	                  marketBuyOrders: UncompletedCrestLink,
 	                  name: String,
-	                  constellations: List[UnImplementedCrestLink],
+	                  constellations: List[CrestLink[Constellation]],
 	                  marketSellOrders: UncompletedCrestLink) extends CrestContainer {
 		def marketBuyLink(itemType: CrestLink[ItemType]) : CrestLinkParams[MarketOrders] = {
 			new CrestLinkParams[MarketOrders](marketBuyOrders.href, Map("type" → itemType.href))
@@ -180,6 +180,16 @@ object Models extends LazyLogging {
 	case class ItemType(name: String, description: String) extends CrestContainer
 
 	object MarketOrders {
+
+		/**
+		 * An unimplemented location crestlink.
+		 */
+		case class Location(
+			id_str: String,
+			href: String,
+			id : Int,
+			name: String
+		)
 		/**
 		 *
 		 * @param href The link has not been implemented yet in EVE CREST.
@@ -194,7 +204,7 @@ object Models extends LazyLogging {
 		                range: String,
 		                href: String,
 		                duration_str: String,
-		                location: IdNamedCrestLink[],
+		                location: MarketOrders.Location,
 		                duration: Int,
 		                minVolume_str: String,
 		                volumeEntered_str: String,
@@ -318,6 +328,55 @@ object Models extends LazyLogging {
 		types: List[NamedCrestLink[ItemType]],
 		published: Boolean
 	) extends CrestContainer
+
+
+	object MarketTypes{
+		case class MarketGroup(
+			override val href: String,
+			id: Int,
+			id_str: String
+		) extends CrestLink[MarketGroup](href)
+		case class Type(
+			id_str: String,
+			override val href: String,
+			id: Int,
+			name: String,
+			icon: Link
+		) extends CrestLink[ItemType](href)
+
+		case class Items(
+			marketGroup: MarketGroup,
+			`type`: Type
+		)
+	}
+	case class MarketTypes (
+		totalCount_str: String,
+		pageCount: Int,
+		items: List[MarketTypes.Items],
+		totalCount: Int,
+		pageCount_str: String,
+		next: Option[CrestLink[MarketTypes]],
+		previous: Option[CrestLink[MarketTypes]]
+	) extends CrestContainer with AuthedAsyncIterable[MarketTypes]
+
+
+	case class MarketGroups(
+		totalCount_str: String,
+		items: List[MarketGroup],
+		pageCount: Double,
+		pageCount_str: String,
+		totalCount: Double
+	)
+	case class MarketGroup(
+		parentGroup: CrestLink[MarketGroup],
+		override val href: String, // Link to itself
+		name: String,
+		// This link already has a parameter attached, use CrestLinkParams to prevent custom params.
+		types: UncompletedCrestLink,
+		description: String
+	) extends CrestLink[MarketGroup](href) {
+		def typesLink = new CrestLinkParams[MarketTypes](types.href, Map.empty)
+	}
 
 	object Alliances {
 		case class AllianceLink(
@@ -507,4 +566,5 @@ object Models extends LazyLogging {
 		system: NamedCrestLink[SolarSystem],
 		name: String
 	)
+
 }
