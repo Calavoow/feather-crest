@@ -5,8 +5,8 @@ import java.util.concurrent.TimeUnit
 import com.typesafe.scalalogging.LazyLogging
 import dispatch._
 import feather.crest.api.CrestLink.CrestCommunicationException
-import feather.crest.api.Models._
 import feather.crest.cache.{ExpiringCache, NoCache}
+import feather.crest.models._
 import spray.json._
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -61,7 +61,7 @@ object CrestLink {
 		implicit val itemTypeFormat: JsonFormat[ItemType] = lazyFormat(jsonFormat2(ItemType.apply))
 
 		implicit val marketOrdersFormat: JsonFormat[MarketOrders] = lazyFormat(jsonFormat7(MarketOrders.apply))
-		implicit val marketOrdersReferenceFormat: JsonFormat[MarketOrders.Reference] = jsonFormat4(MarketOrders.Reference)
+		implicit val marketOrdersReferenceFormat: JsonFormat[MarketOrders.Location] = jsonFormat4(MarketOrders.Location)
 		implicit val MarketOrdersItemsFormat: JsonFormat[MarketOrders.Item] = jsonFormat17(MarketOrders.Item)
 
 		implicit val marketHistoryFormat: JsonFormat[MarketHistory] = lazyFormat(jsonFormat5(MarketHistory.apply))
@@ -88,7 +88,6 @@ object CrestLink {
 		implicit val characterRaceFormat: JsonFormat[Character.Race] = jsonFormat3(Character.Race)
 
 		implicit val marketPricesFormat: JsonFormat[MarketPrices] = lazyFormat(jsonFormat5(MarketPrices.apply))
-		implicit val marketPricesTypeFormat: JsonFormat[MarketPrices.Type] = jsonFormat(MarketPrices.Type, "id_str", "href", "id", "name")
 		implicit val marketPricesItemFormat: JsonFormat[MarketPrices.Item] = jsonFormat3(MarketPrices.Item)
 	}
 }
