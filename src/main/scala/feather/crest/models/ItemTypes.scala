@@ -1,27 +1,15 @@
 package feather.crest.models
 
-import com.typesafe.scalalogging.LazyLogging
-import feather.crest.api.{CrestLink, AuthedAsyncIterable}
-import feather.crest.api.CrestLink.CrestProtocol._
+import feather.crest.api.CrestLink
 
-import scala.concurrent.ExecutionContext
-
-case class ItemTypes(totalCount_str: String,
-	pageCount: Int,
-	items: List[NamedCrestLink[ItemType]],
-	next: Option[CrestLink[ItemTypes]],
-	totalCount: Int,
-	pageCount_str: String,
-	previous: Option[CrestLink[ItemTypes]]
-)
-	extends AuthedAsyncIterable[ItemTypes] with LazyLogging {
-	def authedIterator(auth: Option[String], retries: Int = 1)
-			(implicit ec: ExecutionContext) = {
-		if( next.isDefined ) logger.info(s"Itemtypes has next: $next")
-		// Cannot partially apply function, because of the implicit execution context.
-		this.paramsIterator(Map.empty)(auth, retries)
-	}
-}
+//case class ItemTypes(totalCount_str: String,
+//	pageCount: Int,
+//	items: List[NamedCrestLink[ItemType]],
+//	next: Option[CrestLink[ItemTypes]],
+//	totalCount: Int,
+//	pageCount_str: String,
+//	previous: Option[CrestLink[ItemTypes]]
+//) extends AuthedAsyncIterable[ItemTypes]
 
 /**
  * An ItemType
@@ -42,15 +30,15 @@ case class ItemCategory(
 	published: Boolean
 )
 
-case class ItemGroups(
-	totalCount_str: String,
-	pageCount: Int,
-	items: List[NamedCrestLink[ItemGroup]],
-	next: Option[CrestLink[ItemGroups]],
-	previous: Option[CrestLink[ItemGroups]],
-	totalCount: Int,
-	pageCount_str: String
-) extends AuthedAsyncIterable[ItemGroups]
+//case class ItemGroups(
+//	totalCount_str: String,
+//	pageCount: Int,
+//	items: List[NamedCrestLink[ItemGroup]],
+//	next: Option[CrestLink[ItemGroups]],
+//	previous: Option[CrestLink[ItemGroups]],
+//	totalCount: Int,
+//	pageCount_str: String
+//) extends AuthedAsyncIterable[ItemGroups]
 
 case class ItemGroup(
 	category: CrestLink[ItemCategory],

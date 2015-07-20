@@ -37,15 +37,14 @@ trait AuthedAsyncIterable[T <: AuthedAsyncIterable[T]] {
 	 * @param retries The number of retries.
 	 * @return An Iterable over T.
 	 */
-	def paramsIterator(params: Map[String, String] = Map.empty)
-	                  (auth: Option[String], retries: Int = 1)
+	def paramsIterator(auth: Option[String], retries: Int = 1, params: Map[String,String] = Map.empty)
 	                  (implicit ec: ExecutionContext)
 	: Spool[T] = {
 		def fill(currentPage: Future[T], rest: Promise[Spool[T]]) {
 			currentPage foreach { cPage =>
 				cPage.next match {
 					case Some(nextLink) =>
-						val nextPage = nextLink.follow(auth)
+						val nextPage = nextLink.follow(auth, retries, params)
 						val next = new Promise[Spool[T]]
 						rest() = Return(cPage *:: next)
 						fill(nextPage, next)
@@ -58,7 +57,7 @@ trait AuthedAsyncIterable[T <: AuthedAsyncIterable[T]] {
 		}
 		val rest = new Promise[Spool[T]]
 		self.next match {
-			case Some(nxt) => fill(nxt.follow(auth), rest)
+			case Some(nxt) => fill(nxt.follow(auth, retries, params), rest)
 			case None => rest() = Return(Spool.empty[T])
 		}
 		self *:: rest

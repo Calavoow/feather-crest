@@ -1,7 +1,7 @@
 package feather.crest.models
 
-import feather.crest.api.{CrestLink, AuthedAsyncIterable}
-import CrestLink.CrestProtocol._
+import feather.crest.api.CrestLink
+import feather.crest.api.CrestLink.CrestProtocol._
 
 /**
  * An Eve Corporation
@@ -15,7 +15,7 @@ case class Corporation(
 	id: Int
 )
 
-object Alliances {
+object AlliancesPage {
 
 	case class AllianceLink(
 		id_str: String,
@@ -24,18 +24,17 @@ object Alliances {
 		id: Double,
 		name: String
 	) extends CrestLink[Alliance](href)
-
 }
 
-case class Alliances(
-	totalCount_str: String,
-	pageCount: Int,
-	items: List[Alliances.AllianceLink],
-	next: Option[CrestLink[Alliances]],
-	totalCount: Int,
-	pageCount_str: String,
-	previous: Option[CrestLink[Alliances]]
-) extends AuthedAsyncIterable[Alliances]
+//case class Alliances(
+//	totalCount_str: String,
+//	pageCount: Int,
+//	items: List[Alliances.AllianceLink],
+//	next: Option[CrestLink[Alliances]],
+//	totalCount: Int,
+//	pageCount_str: String,
+//	previous: Option[CrestLink[Alliances]]
+//) extends AuthedAsyncIterable[Alliances]
 
 object Alliance {
 
@@ -68,14 +67,6 @@ case class Alliance(
 	name: String
 )
 
-case class Tournaments(
-	totalCount_str: String,
-	items: List[NamedCrestLink[Tournament]],
-	pageCount: Int,
-	pageCount_str: String,
-	totalCount: Int
-)
-
 case class Wars(
 	totalCount_str: String,
 	pageCount: Int,
@@ -87,7 +78,6 @@ case class Wars(
 )
 
 object War {
-
 	case class Ally(
 		name: String,
 		override val href: String,
@@ -124,7 +114,7 @@ case class War(
 	defender: War.Belligerent,
 	id: Double
 ) {
-	def killMailLink: CrestLink[KillMails] = {
+	def killMailsLink: CrestLink[KillMails] = {
 		CrestLink[KillMails](killmails)
 	}
 }

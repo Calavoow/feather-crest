@@ -48,28 +48,27 @@ case class MarketOrders(totalCount_str: String,
 	items: List[MarketOrders.Item],
 	pageCount: Int,
 	pageCount_str: String,
-	totalCount: Int,
-	next: Option[CrestLink[MarketOrders]],
-	previous: Option[CrestLink[MarketOrders]]
+	totalCount: Int
+//	next: Option[CrestLink[MarketOrders]],
+//	previous: Option[CrestLink[MarketOrders]]
 )
-	extends AuthedAsyncIterable[MarketOrders] with LazyLogging {
-	/**
-	 * Construct an asynchonous iterator through the market orders.
-	 *
-	 * A parameter itemType is required to iterate through the market orders.
-	 *
-	 * TODO: Check if this is the case
-	 * @param itemType A CREST link to the itemtype for which market orders should be retrieved.
-	 * @return An asyncIterator through the market orders of the given itemType.
-	 */
-	def authedIterator(itemType: CrestLink[ItemType])
-			(auth: Option[String], retries: Int = 1)
-			(implicit ec: ExecutionContext) = {
-		if( next.isDefined ) logger.info(s"Market order has next: $next")
-		// Cannot partially apply function, because of the implicit execution context.
-		this.paramsIterator(Map("type" → itemType.href))(auth, retries)
-	}
-}
+//	extends AuthedAsyncIterable[MarketOrders] with LazyLogging {
+//	/**
+//	 * Construct an asynchonous iterator through the market orders.
+//	 *
+//	 * A parameter itemType is required to iterate through the market orders.
+//	 *
+//	 * TODO: Check if this is the case
+//	 * @param itemType A CREST link to the itemtype for which market orders should be retrieved.
+//	 * @return An asyncIterator through the market orders of the given itemType.
+//	 */
+//	def authedIterator(itemType: CrestLink[ItemType], auth: Option[String], retries: Int = 1)
+//			(implicit ec: ExecutionContext) = {
+//		if( next.isDefined ) logger.info(s"Market order has next: $next")
+//		// Cannot partially apply function, because of the implicit execution context.
+//		this.paramsIterator(auth, retries, Map("type" → itemType.href))
+//	}
+//}
 
 object MarketHistory {
 
@@ -132,8 +131,7 @@ case class MarketHistory(totalCount_str: String,
 )
 
 
-object MarketTypes {
-
+object MarketTypesPage {
 	case class Type(
 		id_str: String,
 		override val href: String,
@@ -142,22 +140,21 @@ object MarketTypes {
 		icon: Link
 	) extends CrestLink[ItemType](href)
 
-	case class Items(
+	case class Item(
 		marketGroup: IdCrestLink[MarketGroup],
 		`type`: Type
 	)
-
 }
 
-case class MarketTypes(
-	totalCount_str: String,
-	pageCount: Int,
-	items: List[MarketTypes.Items],
-	totalCount: Int,
-	pageCount_str: String,
-	next: Option[CrestLink[MarketTypes]],
-	previous: Option[CrestLink[MarketTypes]]
-) extends AuthedAsyncIterable[MarketTypes]
+//case class MarketTypes(
+//	totalCount_str: String,
+//	pageCount: Int,
+//	items: List[MarketTypes.Item],
+//	totalCount: Int,
+//	pageCount_str: String,
+//	next: Option[CrestLink[MarketTypes]],
+//	previous: Option[CrestLink[MarketTypes]]
+//) extends AuthedAsyncIterable[MarketTypes]
 
 
 case class MarketGroups(
@@ -176,7 +173,7 @@ case class MarketGroup(
 	types: UncompletedCrestLink,
 	description: String
 ) extends CrestLink[MarketGroup](href) {
-	def typesLink = new CrestLinkParams[MarketTypes](types.href, Map.empty)
+	def typesLink = new CrestLinkParams[PaginatedResource[MarketTypesPage.Item]](types.href, Map.empty)
 }
 
 object MarketPrices {

@@ -1,9 +1,16 @@
 package feather.crest.models
 
-import feather.crest.api.{AuthedAsyncIterable, CrestLink}
-import feather.crest.api.CrestLink.CrestProtocol._
+import feather.crest.api.CrestLink
 import spray.json.JsonReader
 
+
+case class Tournaments(
+	totalCount_str: String,
+	items: List[NamedCrestLink[Tournament]],
+	pageCount: Int,
+	pageCount_str: String,
+	totalCount: Int
+)
 
 object Tournament {
 
@@ -25,16 +32,17 @@ case class Tournament(
 	entries: List[Tournament.Entry]
 )
 
+//class KillMails extends PaginatedResource[IdCrestLink[KillMail]]
 
-case class KillMails(
-	totalCount_str: String,
-	items: List[IdCrestLink[KillMail]],
-	next: Option[CrestLink[KillMails]],
-	prev: Option[CrestLink[KillMails]],
-	pageCount: Int,
-	pageCount_str: String,
-	totalCount: Int
-) extends AuthedAsyncIterable[KillMails]
+//case class KillMails(
+//	totalCount_str: String,
+//	items: List[IdCrestLink[KillMail]],
+//	next: Option[CrestLink[KillMails]],
+//	prev: Option[CrestLink[KillMails]],
+//	pageCount: Int,
+//	pageCount_str: String,
+//	totalCount: Int
+//) extends AuthedAsyncIterable[KillMails]
 
 
 object KillMail {

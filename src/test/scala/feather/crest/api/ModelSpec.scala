@@ -3,7 +3,7 @@ package feather.crest.api
 import com.typesafe.scalalogging.LazyLogging
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{Matchers, FlatSpec}
-import Models._
+import feather.crest.models._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Future, Await}
 import scala.concurrent.duration._
@@ -51,7 +51,7 @@ class ModelSpec extends FlatSpec with Matchers with ScalaFutures with LazyLoggin
 		 * thus we create an asynchronous collection over all itemtype pages
 		 * (a Twitter [[com.twitter.concurrent.Spool]]).
 		 **/
-		val itemTypesSpool = itemTypesPage.map(_.authedIterator(auth, retries=3))
+		val itemTypesSpool = itemTypesPage.map(_.paramsIterator(auth, retries=3))
 		// Flatten all itemTypes into one big list.
 		val allItemTypes = itemTypesSpool.flatMap { itemType =>
 			// Make one large List containing all itemTypes, and its size for testing
@@ -136,7 +136,7 @@ class ModelSpec extends FlatSpec with Matchers with ScalaFutures with LazyLoggin
 			item.volume should be > 0L
 			item.price should be > 0D
 			item.minVolume should be > 0L
-			item.`type`.name == "Hammerhead II"
+			item.`type`.name should equal("Hammerhead II")
 		}
 
 		whenReady(buyAndSell) {
@@ -152,6 +152,8 @@ class ModelSpec extends FlatSpec with Matchers with ScalaFutures with LazyLoggin
 				}
 		}
 	}
+
+
 
 	it should "get market history for Hammerhead II in Domain" in {
 		implicit val patienceConfig = PatienceConfig(timeout = 5 seconds)
