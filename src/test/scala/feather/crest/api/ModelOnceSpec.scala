@@ -70,10 +70,9 @@ class ModelOnceSpec extends FlatSpec with Matchers with LazyLogging {
 		async {
 			val aTheForge: Region = await(theForge)
 			val itemTypes = await(futItemTypes)
-			println(itemTypes.size)
 
 			for(itemTypeGroup <- itemTypes.grouped(25)) {
-				logger.debug(s"${itemTypeGroup.head}")
+				logger.trace(s"${itemTypeGroup.head}")
 				val out = for(itemType <- itemTypeGroup) yield {
 					async {
 						val buyOrder = await(aTheForge.marketBuyLink(itemType).follow(auth))
@@ -87,10 +86,9 @@ class ModelOnceSpec extends FlatSpec with Matchers with LazyLogging {
 				}
 				// Block after every group, so that not too many requests are sent at once.
 				Await.ready(Future.sequence(out), 10 seconds)
-				logger.debug("Next group")
 			}
 		}
-		// At least 10k of the buy and sell orders must have no second page, to check this property.
+		// At least 2k of the buy and sell orders must have no second page, to check this property.
 		waiter.await(dismissals(2000))
 	}
 }
