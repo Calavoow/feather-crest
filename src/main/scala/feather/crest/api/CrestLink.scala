@@ -98,7 +98,7 @@ object CrestLink {
 		/**
 		 * Market
 		 */
-		implicit val marketOrdersFormat: JsonFormat[MarketOrders] = lazyFormat(jsonFormat7(MarketOrders.apply))
+		implicit val marketOrdersFormat: JsonFormat[MarketOrders] = lazyFormat(jsonFormat5(MarketOrders.apply))
 		implicit val marketOrdersReferenceFormat: JsonFormat[MarketOrders.Location] = jsonFormat4(MarketOrders.Location)
 		implicit val MarketOrdersItemFormat: JsonFormat[MarketOrders.Item] = jsonFormat17(MarketOrders.Item.apply)
 
@@ -192,7 +192,7 @@ class CrestLink[T: JsonReader](val href: String) extends LazyLogging {
 	 */
 	def request(auth: Option[String], retries: Int = 1, params: Map[String, String] = Map.empty)
 	          (implicit ec: ExecutionContext, cache: ExpiringCache[T] = new NoCache[T]): Future[T] = {
-		logger.trace(s"Fetching with {}", auth)
+		logger.trace(s"Fetching $href with $auth")
 		// GET
 		val getRequest = url(href).secure
 
@@ -209,9 +209,6 @@ class CrestLink[T: JsonReader](val href: String) extends LazyLogging {
 		// Add the GET parameters
 		val finalRequest = authedRequest <<? params
 
-		logger.trace(s"Authedrequest string: ${authedRequest.toString}")
-		logger.trace(finalRequest.toRequest.getUri.toString)
-
 		val responseFut = Util.retryFuture(retries) {
 			Http(finalRequest)
 		}
@@ -219,8 +216,7 @@ class CrestLink[T: JsonReader](val href: String) extends LazyLogging {
 		val parsedResult = responseFut.map { response ⇒
 			response.getStatusCode match {
 				case 200 =>
-					logger.debug(s"Headers of request are: ${response.getHeaders()}")
-					logger.debug(response.getStatusCode + ": " + response.getStatusText)
+					logger.debug(s"Response status: ${response.getStatusCode}: ${response.getStatusText}")
 					val cacheTime = response.getHeader("Access-Control-Max-Age").toLong
 					val cacheDuration = Duration(cacheTime, TimeUnit.SECONDS)
 					val jsonAst = response.getResponseBody.parseJson
@@ -237,7 +233,8 @@ class CrestLink[T: JsonReader](val href: String) extends LazyLogging {
 		}
 
 		parsedResult.onFailure {
-			case x ⇒ logger.warn(s"Error following link: $finalRequest\n ${x.getMessage}")
+			case x ⇒
+				logger.warn(s"Error following link: $this\n${x.getMessage}\n${x.getStackTrace.mkString("","\n","\n")}")
 		}
 		parsedResult
 	}
