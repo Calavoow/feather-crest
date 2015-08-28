@@ -69,7 +69,7 @@ case class Picture(
 /**
  * A resource that is listed across many pages.
  *
- * Do not use this directly in a model. Instead use / make a type alias in the package object.
+ * Do not use this directly in a model. Instead make a type alias in the package object.
  * @example [[ItemTypes]]
  * @todo Make next and previous the same type as 'this'. (Maybe type classes)
  * @tparam T The type of the Model being iterated over.

@@ -33,6 +33,7 @@ class ModelSpec extends FlatSpec with Matchers with ScalaFutures with LazyLoggin
 		implicit val patienceConfig = PatienceConfig(timeout = 3 seconds)
 		val root = Root.fetch(None)
 		whenReady(root) { readyRoot =>
+			println(readyRoot)
 			readyRoot.crestEndpoint.href should be ("https://crest-tq.eveonline.com/")
 		}
 	}

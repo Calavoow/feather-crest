@@ -31,6 +31,11 @@ object Root {
 		eve: UnImplementedCrestLink
 	)
 
+	case class Sovereignty(
+		campaigns: Link,
+		structures: Link
+	)
+
 }
 
 case class Root(crestEndpoint: CrestLink[Root],
@@ -46,6 +51,7 @@ case class Root(crestEndpoint: CrestLink[Root],
 	itemCategories: CrestLink[ItemCategories],
 	regions: CrestLink[Regions],
 	marketGroups: CrestLink[MarketGroups],
+	sovereignty: Root.Sovereignty,
 	tournaments: CrestLink[Tournaments],
 	map: UnImplementedCrestLink,
 	wars: CrestLink[Wars],

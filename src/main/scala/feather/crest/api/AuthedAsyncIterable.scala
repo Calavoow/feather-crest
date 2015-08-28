@@ -28,9 +28,10 @@ trait AuthedAsyncIterable[T <: AuthedAsyncIterable[T]] {
 	def next: Option[CrestLink[T]]
 
 	/**
-	 * Construct an iterable with parameters over the given type T, which iterates throught the CREST.
+	 * Construct an iterable with parameters over the given type T, which iterates through the CREST.
 	 *
-	 * The user should *not* have to use this function. Use `authedIterable` instead.
+	 * This is usually applied to paginated resources,
+	 * where the results are split over multiple pages.
 	 *
 	 * @param params The parameters to make a crest call with
 	 * @param auth The authentication token
@@ -56,7 +57,7 @@ trait AuthedAsyncIterable[T <: AuthedAsyncIterable[T]] {
 			}
 		}
 		val rest = new Promise[Spool[T]]
-		self.next match {
+		next match {
 			case Some(nxt) => fill(nxt.follow(auth, retries, params), rest)
 			case None => rest() = Return(Spool.empty[T])
 		}

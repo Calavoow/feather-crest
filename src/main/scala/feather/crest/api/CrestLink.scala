@@ -39,6 +39,100 @@ object CrestLink {
 			}
 		}
 
+
+		/**
+		 * Implementation of Root case class, since it has more than 22 fields and that is not supported by jsonFormat.
+		 */
+		implicit def rootFormat : RootJsonFormat[Root] = new RootJsonFormat[Root] {
+			override def write(c: Root) = JsObject(
+				"crestEndPoint" -> c.crestEndpoint.toJson,
+				"corporationRoles" -> c.corporationRoles.toJson,
+				"itemGroups" -> c.itemGroups.toJson,
+				"channels" -> c.channels.toJson,
+				"corporations" -> c.corporations.toJson,
+				"alliances" -> c.alliances.toJson,
+				"itemTypes" -> c.itemTypes.toJson,
+				"decode" -> c.decode.toJson,
+				"battleTheatres" -> c.battleTheatres.toJson,
+				"marketPrices" -> c.marketPrices.toJson,
+				"itemCategories" -> c.itemCategories.toJson,
+				"regions" -> c.regions.toJson,
+				"marketGroups" -> c.marketGroups.toJson,
+				"sovereignty" -> c.sovereignty.toJson,
+				"tournaments" -> c.tournaments.toJson,
+				"map" -> c.map.toJson,
+				"wars" -> c.wars.toJson,
+				"incursions" -> c.incursions.toJson,
+				"authEndpoint" -> c.authEndpoint.toJson,
+				"industry" -> c.industry.toJson,
+				"clients" -> c.clients.toJson,
+				"time" -> c.time.toJson,
+				"marketTypes" -> c.marketTypes.toJson
+			)
+			override def read(value: JsValue) : Root = {
+				val names = List(
+					"crestEndpoint",
+					"corporationRoles",
+					"itemGroups",
+					"channels",
+					"corporations",
+					"alliances",
+					"itemTypes",
+					"decode",
+					"battleTheatres",
+					"marketPrices",
+					"itemCategories",
+					"regions",
+					"marketGroups",
+					"sovereignty",
+					"tournaments",
+					"map",
+					"wars",
+					"incursions",
+					"authEndpoint",
+					"industry",
+					"clients",
+					"time",
+					"marketTypes"
+				)
+				val fields = value.asJsObject.getFields(names:_*)
+
+				// If the fields were correctly found.
+				if(fields.size == names.size) {
+					// Then deserialize JsObjects, by name
+					// Cannot do unapply (case match), since more than 22 fields.
+					val fieldMap = fields.zip(names).map { case (js, name) => name -> js }.toMap
+					new Root(
+						crestEndpoint = fieldMap("crestEndpoint").convertTo[CrestLink[Root]],
+						corporationRoles = fieldMap("corporationRoles").convertTo[UnImplementedCrestLink],
+						itemGroups = fieldMap("itemGroups").convertTo[CrestLink[ItemGroups]],
+						channels = fieldMap("channels").convertTo[UnImplementedCrestLink],
+						corporations = fieldMap("corporations").convertTo[UnImplementedCrestLink],
+						alliances = fieldMap("alliances").convertTo[CrestLink[Alliances]],
+						itemTypes = fieldMap("itemTypes").convertTo[CrestLink[ItemTypes]],
+						decode = fieldMap("decode").convertTo[CrestLink[Decode]],
+						battleTheatres = fieldMap("battleTheatres").convertTo[UnImplementedCrestLink],
+						marketPrices = fieldMap("marketPrices").convertTo[CrestLink[MarketPrices]],
+						itemCategories = fieldMap("itemCategories").convertTo[CrestLink[ItemCategories]],
+						regions = fieldMap("regions").convertTo[CrestLink[Regions]],
+						marketGroups = fieldMap("marketGroups").convertTo[CrestLink[MarketGroups]],
+						sovereignty = fieldMap("sovereignty").convertTo[Root.Sovereignty],
+						tournaments = fieldMap("tournaments").convertTo[CrestLink[Tournaments]],
+						map = fieldMap("map").convertTo[UnImplementedCrestLink],
+						wars = fieldMap("wars").convertTo[CrestLink[Wars]],
+						incursions = fieldMap("incursions").convertTo[TodoCrestLink],
+						authEndpoint = fieldMap("authEndpoint").convertTo[Link],
+						industry = fieldMap("industry").convertTo[Root.Industry],
+						clients = fieldMap("clients").convertTo[Root.Clients],
+						time = fieldMap("time").convertTo[UnImplementedCrestLink],
+						marketTypes = fieldMap("marketTypes").convertTo[CrestLink[MarketTypes]]
+					)
+				} else {
+					throw new DeserializationException("Root JSON expected.")
+				}
+			}
+		}
+
 		implicit def namedCrestLinkFormat[T: JsonFormat]: JsonFormat[NamedCrestLink[T]] = jsonFormat(NamedCrestLink.apply[T] _, "href", "name")
 		implicit def idCrestLinkFormat[T: JsonFormat]: JsonFormat[IdCrestLink[T]] = jsonFormat(IdCrestLink.apply[T] _, "id_str", "href", "id")
 		implicit def idNamedCrestLinkFormat[T: JsonFormat]: JsonFormat[IdNamedCrestLink[T]] = jsonFormat(IdNamedCrestLink.apply[T] _, "id_str", "href", "id", "name")
@@ -132,11 +226,13 @@ object CrestLink {
 		/**
 		 * Root
 		 */
-		implicit val rootFormat: JsonFormat[Root] = lazyFormat(jsonFormat22(Root.apply))
+//		implicit val rootFormat: JsonFormat[Root] = lazyFormat(jsonFormat22(Root.apply))
 		implicit val rootMotdFormat: JsonFormat[Root.Motd] = jsonFormat3(Root.Motd)
 		implicit val rootUserCountsFormat: JsonFormat[Root.UserCounts] = jsonFormat4(Root.UserCounts)
 		implicit val rootIndustryFormat: JsonFormat[Root.Industry] = jsonFormat2(Root.Industry)
 		implicit val rootClientsFormat: JsonFormat[Root.Clients] = jsonFormat2(Root.Clients)
+		implicit val rootSovereigntyFormat: JsonFormat[Root.Sovereignty] = jsonFormat2(Root.Sovereignty)
+
 
 		/**
 		 * Universe
@@ -250,6 +346,8 @@ class CrestLink[T: JsonReader](val href: String) extends LazyLogging {
 			case (s1, s2) ⇒ s1 + "=" + s2
 		}.mkString("&")
 	}
+
+	override def toString: String = "CrestLink(" + href + ")"
 }
 
 /**

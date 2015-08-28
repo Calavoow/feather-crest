@@ -44,13 +44,20 @@ object MarketOrders {
 
 }
 
+/**
+ * Market orders for an item.
+ *
+ * The item was specified in obtaining this class.
+ * Experimentally we have checked if pagination occurs,
+ * but that does not seem the case.
+ * Thus we have removed the pagination fields.
+ * @see The associated ModelOnce specification test.
+ */
 case class MarketOrders(totalCount_str: String,
 	items: List[MarketOrders.Item],
 	pageCount: Int,
 	pageCount_str: String,
 	totalCount: Int
-//	next: Option[CrestLink[MarketOrders]],
-//	previous: Option[CrestLink[MarketOrders]]
 )
 //	extends AuthedAsyncIterable[MarketOrders] with LazyLogging {
 //	/**
