@@ -50,6 +50,9 @@ object Alliance {
 
 }
 
+/**
+ * An Alliance of [[Corporation]]s
+ */
 case class Alliance(
 	startDate: String,
 	corporationsCount: Int,
@@ -118,3 +121,81 @@ case class War(
 		CrestLink[KillMails](killmails)
 	}
 }
+
+object Structures {
+	case class Item(
+		alliance: IdNamedCrestLink[Alliance],
+		vulnerabilityOccupancyLevel: Option[Double],
+		structureID_str: String,
+		structureID: Long,
+		vulnerableStartTime: Option[String],
+		solarSystem: IdNamedCrestLink[SolarSystem],
+		vulnerableEndTime: Option[String],
+		`type`: IdNamedCrestLink[ItemTypes]
+	)
+}
+
+/**
+ * "This lists every structure in New Eden that is contributing to sovereignty be it a TCU, IHub, or a station."
+ *
+ * @see https://developers.eveonline.com/blog/article/aegis-sovereignty-api-changes
+ */
+case class Structures (
+	totalCount_str: String,
+	items: List[Structures.Item],
+	pageCount: Int,
+	pageCount_str: String,
+	totalCount: Int
+)
+
+object Campaigns {
+	case class Attackers(
+		score: Double
+	)
+
+	case class Defender(
+		defender: IdNamedCrestLink[Alliance],
+		score: Double
+	)
+
+	case class Score(
+		score: Double,
+		team: IdNamedCrestLink[Alliance]
+	)
+
+	/**
+	 * A Campaign item, describing a sov campaign.
+	 *
+	 * @param eventType is 1,2,3 or 4.
+	 *                  If 1-3 then the [[Campaigns.Item]] has [[attackers]] and [[defender]],
+	 *                  if 4 then it has [[scores]].
+	 *
+	 * @see https://developers.eveonline.com/blog/article/aegis-sovereignty-api-changes
+	 */
+	case class Item(
+		eventType_str: String,
+		campaignID: Int,
+		eventType: Int,
+		sourceSolarsystem: IdNamedCrestLink[SolarSystem],
+		attackers: Option[Campaigns.Attackers],
+		campaignID_str: String,
+		sourceItemID: Long,
+		startTime: String,
+		sourceItemID_str: String,
+		defender: Option[Campaigns.Defender],
+		constellation: IdNamedCrestLink[Constellation],
+		scores: Option[List[Score]]
+	)
+}
+
+/**
+ * A command node campaign will occur when a sov structure has been successfully contested.
+ */
+case class Campaigns (
+	totalCount_str: String,
+	items: List[Campaigns.Item],
+	pageCount: Int,
+	pageCount_str: String,
+	totalCount: Int
+)
+

@@ -32,8 +32,8 @@ object Root {
 	)
 
 	case class Sovereignty(
-		campaigns: Link,
-		structures: Link
+		campaigns: CrestLink[Campaigns],
+		structures: CrestLink[Structures]
 	)
 
 }

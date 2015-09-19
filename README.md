@@ -50,10 +50,10 @@ val rootResult = Await.result(root, 10 seconds) // Root
 println(rootResult.crestEndpoint.href)
 ```
 
+### Regions (using for comprehensions)
 For the following examples an `auth : Some[String]` variable is assumed,
 which contains a string of the authentication token used to authenticate to the CREST API.
 
-### Regions (using for comprehensions)
 We can get region information by following a link to Regions of the Root class.
 Using Scala for-constructs, that looks as follows
 ```scala

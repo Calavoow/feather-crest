@@ -4,7 +4,7 @@ import spray.json.JsonReader
 import feather.crest.api.{AuthedAsyncIterable, CrestLink}
 
 /**
- * To follow this crest link some construction is required.
+ * To follow this CrestLink some construction is required.
  *
  * See the class methods to construct a normal CrestLink
  */
@@ -18,12 +18,27 @@ case class UncompletedCrestLink(href: String)
  */
 case class NamedCrestLink[T: JsonReader](override val href: String, name: String) extends CrestLink[T](href)
 
+/**
+ * A [[CrestLink]] which has an [[id]] of the thing being linked.
+ * @param id_str The id stringified.
+ * @param href The Crest URL to the Crest instance.
+ * @param id The id of the item.
+ * @tparam T The type of CrestContainer to construct.
+ */
 case class IdCrestLink[T: JsonReader](
 	id_str: String,
 	override val href: String,
 	id: Int
 ) extends CrestLink[T](href)
 
+/**
+ * A [[CrestLink]] that also has an [[id]] and the [[name]] of the thing being linked.
+ * @param id_str id stringified
+ * @param href The Crest URL to the item
+ * @param id The id of the item
+ * @param name The name of the item
+ * @tparam T The type of CrestContainer to construct.
+ */
 case class IdNamedCrestLink[T: JsonReader](
 	id_str: String,
 	override val href: String,

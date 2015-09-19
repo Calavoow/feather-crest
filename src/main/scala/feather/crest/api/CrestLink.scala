@@ -171,6 +171,15 @@ object CrestLink {
 		implicit val warBelligerentFormat: JsonFormat[War.Belligerent] =
 			jsonFormat(War.Belligerent.apply _, "shipsKilled", "shipsKilled_str", "name", "href", "id_str", "icon", "id", "iskKilled")
 
+		implicit val structuresFormat: JsonFormat[Structures] = lazyFormat(jsonFormat5(Structures.apply))
+		implicit val structuresItemFormat: JsonFormat[Structures.Item] = lazyFormat(jsonFormat8(Structures.Item))
+
+		implicit val campaignsFormat: JsonFormat[Campaigns] = lazyFormat(jsonFormat5(Campaigns.apply))
+		implicit val campaignsItemFormat: JsonFormat[Campaigns.Item] = lazyFormat(jsonFormat12(Campaigns.Item))
+		implicit val campaignsAttackersFormat: JsonFormat[Campaigns.Attackers] = jsonFormat1(Campaigns.Attackers)
+		implicit val campaignsDefenderFormat: JsonFormat[Campaigns.Defender] = lazyFormat(jsonFormat2(Campaigns.Defender))
+		implicit val campaignsScoreFormat: JsonFormat[Campaigns.Score] = lazyFormat(jsonFormat2(Campaigns.Score))
+
 		/**
 		 * Industry
 		 */
@@ -251,7 +260,7 @@ object CrestLink {
 }
 /**
  * CrestLink contains a crest URL to follow, creating another Crest instance
- * @param href The Crest URL to the next link
+ * @param href The Crest URL to the Crest instance.
  * @tparam T The type of CrestContainer to construct.
  */
 class CrestLink[T: JsonReader](val href: String) extends LazyLogging {
