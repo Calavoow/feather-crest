@@ -16,7 +16,6 @@ case class Corporation(
 )
 
 object AlliancesPage {
-
 	case class AllianceLink(
 		id_str: String,
 		shortName: String,
@@ -70,15 +69,15 @@ case class Alliance(
 	name: String
 )
 
-case class Wars(
-	totalCount_str: String,
-	pageCount: Int,
-	items: List[IdCrestLink[War]],
-	next: Option[CrestLink[Wars]],
-	prev: Option[CrestLink[Wars]],
-	totalCount: Int,
-	pageCount_str: String
-)
+//case class Wars(
+//	totalCount_str: String,
+//	pageCount: Int,
+//	items: List[IdCrestLink[War]],
+//	next: Option[CrestLink[Wars]],
+//	prev: Option[CrestLink[Wars]],
+//	totalCount: Int,
+//	pageCount_str: String
+//)
 
 object War {
 	case class Ally(
@@ -133,11 +132,25 @@ object Structures {
 		vulnerableEndTime: Option[String],
 		`type`: IdNamedCrestLink[ItemTypes]
 	)
+//	{
+//		override def toString = {
+//			s"""Item(
+//			   |    alliance: $alliance
+//			   |    vulnerabilityOccupancyLevel: $vulnerabilityOccupancyLevel
+//			   |    structureID_str: $structureID_str
+//			   |    structureID: $structureID
+//			   |    vulnerableStartTime: $vulnerableStartTime
+//			   |    solarSystem: $solarSystem
+//			   |    vulnerableEndTime: $vulnerableEndTime
+//			   |    type: ${`type`}
+//			   |)
+//			 """.stripMargin
+//		}
+//	}
 }
 
 /**
  * "This lists every structure in New Eden that is contributing to sovereignty be it a TCU, IHub, or a station."
- *
  * @see https://developers.eveonline.com/blog/article/aegis-sovereignty-api-changes
  */
 case class Structures (

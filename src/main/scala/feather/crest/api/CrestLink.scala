@@ -164,7 +164,7 @@ object CrestLink {
 		implicit val allianceFormat: JsonFormat[Alliance] = jsonFormat14(Alliance.apply)
 		implicit val allianceCharacterFormat: JsonFormat[Alliance.Character] = jsonFormat7(Alliance.Character)
 
-		implicit val warsFormat: JsonFormat[Wars] = lazyFormat(jsonFormat7(Wars.apply))
+		// implicit val warsFormat: JsonFormat[Wars] = lazyFormat(jsonFormat7(Wars.apply))
 		implicit val warFormat: JsonFormat[War] = lazyFormat(jsonFormat13(War.apply))
 		implicit val warAllyFormat: JsonFormat[War.Ally] =
 			jsonFormat(War.Ally.apply _, "name", "href", "id_str", "icon", "id")
@@ -275,7 +275,7 @@ class CrestLink[T: JsonReader](val href: String) extends LazyLogging {
 	 * @param cache The cache to retrieve cached results from and store the request result in.
 	 * @return The constructed Crest class.
 	 */
-	def follow(auth: Option[String], retries : Int = 1, params: Map[String, String] = Map.empty)
+	def follow(auth: Option[String] = None, retries : Int = 1, params: Map[String, String] = Map.empty)
 	          (implicit ec: ExecutionContext, cache: ExpiringCache[T] = new NoCache[T]): Future[T] = {
 		val cacheResult = cache.get(cacheKey(params))
 		cacheResult.getOrElse {
@@ -295,7 +295,7 @@ class CrestLink[T: JsonReader](val href: String) extends LazyLogging {
 	 * @param cache The cache to store the request result in.
 	 * @return A model of T.
 	 */
-	def request(auth: Option[String], retries: Int = 1, params: Map[String, String] = Map.empty)
+	def request(auth: Option[String] = None, retries: Int = 1, params: Map[String, String] = Map.empty)
 	          (implicit ec: ExecutionContext, cache: ExpiringCache[T] = new NoCache[T]): Future[T] = {
 		logger.trace(s"Fetching $href with $auth")
 		// GET
@@ -383,7 +383,7 @@ class CrestLinkParams[T: JsonReader](href: String, params: Map[String,String]) e
 	 * @param cache The cache to retrieve cached results from and store the request result in.
 	 * @return The constructed Crest class.
 	 */
-	override def follow(auth: Option[String], retries: Int = 1, params: Map[String,String] = Map.empty)
+	override def follow(auth: Option[String] = None, retries: Int = 1, params: Map[String,String] = Map.empty)
 	          (implicit ec: ExecutionContext, cache: ExpiringCache[T] = new NoCache[T]) : Future[T] = {
 		// No user defined parameters.
 		if(params.isEmpty) super.follow(auth, retries, this.params)
@@ -401,7 +401,7 @@ class CrestLinkParams[T: JsonReader](href: String, params: Map[String,String]) e
 	 * @param cache The cache to store the request result in.
 	 * @return A model of T.
 	 */
-	override def request(auth: Option[String], retries: Int = 1, params: Map[String, String] = Map.empty)
+	override def request(auth: Option[String] = None, retries: Int = 1, params: Map[String, String] = Map.empty)
 	           (implicit ec: ExecutionContext, cache: ExpiringCache[T] = new NoCache[T]) : Future[T] = {
 		// No user defined parameters.
 		if(params.isEmpty) super.request(auth, retries, this.params)

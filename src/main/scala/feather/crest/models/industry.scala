@@ -17,6 +17,9 @@ object IndustryFacilities {
 
 }
 
+/**
+ * The facilities provided for industry.
+ */
 case class IndustryFacilities(
 	totalCount_str: String,
 	items: List[IndustryFacilities.Item],
@@ -42,6 +45,9 @@ object IndustrySystems {
 
 }
 
+/**
+ * The systems for industry.
+ */
 case class IndustrySystems(
 	totalCount_str: String,
 	items: List[IndustrySystems.Item],

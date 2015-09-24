@@ -6,7 +6,7 @@ import feather.crest.api.CrestLink.CrestProtocol._
 import scala.concurrent.{Future, ExecutionContext}
 
 object Root {
-	def fetch(auth: Option[String])(implicit ec: ExecutionContext): Future[Root] = {
+	def fetch(auth: Option[String] = None)(implicit ec: ExecutionContext): Future[Root] = {
 		// The only "static" CREST URL.
 		val endpoint = "https://crest-tq.eveonline.com/"
 		CrestLink[Root](endpoint).follow(auth)
@@ -38,7 +38,8 @@ object Root {
 
 }
 
-case class Root(crestEndpoint: CrestLink[Root],
+case class Root(
+	crestEndpoint: CrestLink[Root],
 	corporationRoles: UnImplementedCrestLink,
 	itemGroups: CrestLink[ItemGroups],
 	channels: UnImplementedCrestLink,

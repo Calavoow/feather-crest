@@ -14,17 +14,7 @@ import feather.crest.api.CrestLink.CrestProtocol._
 import scala.async.Async.{async,await}
 
 class ModelSpec extends FlatSpec with Matchers with ScalaFutures with LazyLogging {
-	/**
-	 * Try to read auth.txt in the test/resources folder.
-	 *
-	 * This file should only contain a string of an authentication token,
-	 * such that the authed-crest may be accessed with it.
-	 */
-	val auth = {
-		Option(getClass().getResource("/auth.txt"))
-			.map(Source.fromURL)
-			.map(_.getLines().next())
-	}
+	import Authentication.auth
 
 	"Root" should "be fetchable without auth" in {
 		implicit val patienceConfig = PatienceConfig(timeout = 3 seconds)
@@ -174,44 +164,4 @@ class ModelSpec extends FlatSpec with Matchers with ScalaFutures with LazyLoggin
 		}
 	}
 
-	it should "get vulnerable sov structures" in {
-		implicit val patienceConfig = PatienceConfig(timeout = 10 seconds)
-		val root = Root.fetch(auth)
-
-		val structures = for(
-			r <- root;
-			structs <- r.sovereignty.structures.follow(auth)
-		) yield { structs }
-
-		whenReady(structures) { structs =>
-			structs.items.size should equal(structs.totalCount)
-			structs.items.foreach { structure =>
-				structure.structureID.toString should equal(structure.structureID_str)
-			}
-
-			val nonVulnStruct = structs.items.find { struct =>
-				struct.vulnerabilityOccupancyLevel.isEmpty
-			}
-			println(nonVulnStruct)
-		}
-	}
-
-	it should "get sov campaigns" in {
-		implicit val patienceConfig = PatienceConfig(timeout = 10 seconds)
-		val root = Root.fetch(auth)
-
-		val campaigns = for(
-			r <- root;
-			camps <- r.sovereignty.campaigns.follow(auth)
-		) yield { camps }
-
-		whenReady(campaigns) { campaigns =>
-			campaigns.items.size should equal(campaigns.totalCount)
-			campaigns.items.foreach { campaign =>
-				campaign.campaignID.toString should equal(campaign.campaignID_str)
-				campaign.eventType.toString should equal(campaign.eventType_str)
-
-			}
-		}
-	}
 }

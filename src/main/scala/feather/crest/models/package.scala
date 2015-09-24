@@ -6,4 +6,5 @@ package object models {
 	type Alliances = PaginatedResource[AlliancesPage.AllianceLink]
 	type MarketTypes = PaginatedResource[MarketTypesPage.Item]
 	type KillMails = PaginatedResource[IdCrestLink[KillMail]]
+	type Wars = PaginatedResource[IdCrestLink[War]]
 }
