@@ -11,6 +11,8 @@ object MarketOrders {
 
 	/**
 	 * An unimplemented location crestlink.
+	 *
+	 * @todo Wait for implementation
 	 */
 	case class Location(
 		id_str: String,
@@ -20,6 +22,7 @@ object MarketOrders {
 	)
 
 	/**
+	 * A market order.
 	 *
 	 * @param href The link has not been implemented yet in EVE CREST.
 	 */
@@ -59,23 +62,6 @@ case class MarketOrders(totalCount_str: String,
 	pageCount_str: String,
 	totalCount: Int
 )
-//	extends AuthedAsyncIterable[MarketOrders] with LazyLogging {
-//	/**
-//	 * Construct an asynchonous iterator through the market orders.
-//	 *
-//	 * A parameter itemType is required to iterate through the market orders.
-//	 *
-//	 * TODO: Check if this is the case
-//	 * @param itemType A CREST link to the itemtype for which market orders should be retrieved.
-//	 * @return An asyncIterator through the market orders of the given itemType.
-//	 */
-//	def authedIterator(itemType: CrestLink[ItemType], auth: Option[String], retries: Int = 1)
-//			(implicit ec: ExecutionContext) = {
-//		if( next.isDefined ) logger.info(s"Market order has next: $next")
-//		// Cannot partially apply function, because of the implicit execution context.
-//		this.paramsIterator(auth, retries, Map("type" → itemType.href))
-//	}
-//}
 
 object MarketHistory {
 
@@ -130,6 +116,11 @@ object MarketHistory {
 	}
 }
 
+/**
+ * Market history is only available through a direct request.
+ *
+ * There is no CREST link to the Market history.
+ */
 case class MarketHistory(totalCount_str: String,
 	items: List[MarketHistory.Item],
 	pageCount: Int,
@@ -153,17 +144,6 @@ object MarketTypesPage {
 	)
 }
 
-//case class MarketTypes(
-//	totalCount_str: String,
-//	pageCount: Int,
-//	items: List[MarketTypes.Item],
-//	totalCount: Int,
-//	pageCount_str: String,
-//	next: Option[CrestLink[MarketTypes]],
-//	previous: Option[CrestLink[MarketTypes]]
-//) extends AuthedAsyncIterable[MarketTypes]
-
-
 case class MarketGroups(
 	totalCount_str: String,
 	items: List[MarketGroup],
@@ -172,19 +152,25 @@ case class MarketGroups(
 	totalCount: Double
 )
 
+/**
+ * A group of market items.
+ * @param parentGroup
+ * @param href The Crest URL to the Crest instance.
+ * @param name
+ * @param types This link already has a parameter attached, use [[typesLink]] to construct a CrestLink.
+ * @param description
+ */
 case class MarketGroup(
 	parentGroup: CrestLink[MarketGroup],
 	override val href: String, // Link to itself
 	name: String,
-	// This link already has a parameter attached, use CrestLinkParams to prevent custom params.
 	types: UncompletedCrestLink,
 	description: String
 ) extends CrestLink[MarketGroup](href) {
-	def typesLink = new CrestLinkParams[PaginatedResource[MarketTypesPage.Item]](types.href, Map.empty)
+	def typesLink = new CrestLinkParams[MarketTypes](types.href, Map.empty)
 }
 
 object MarketPrices {
-
 	case class Item(
 		adjustedPrice: Double,
 		averagePrice: Double,

@@ -14,7 +14,7 @@ class CorporationSpec extends FlatSpec with Matchers with ScalaFutures with Lazy
 
 	implicit override val patienceConfig = PatienceConfig(timeout = 10 seconds)
 
-	"corporation" should "fetch alliances and alliance" in {
+	"corporation" should "fetch alliances, alliance and corp" in {
 		val alliance = for(
 			r <- Root.fetch();
 			alliances <- r.alliances.follow(auth);
@@ -23,8 +23,20 @@ class CorporationSpec extends FlatSpec with Matchers with ScalaFutures with Lazy
 
 		whenReady(alliance) { alli =>
 			alli.id.toString should equal(alli.id_str)
+			alli.executorCorporation.id.toString should equal(alli.executorCorporation.id_str)
 		}
 	}
+
+//	it should "fetch a killmail" in {
+//		val alliances = for(
+//			r <- Root.fetch();
+//			as <- r.alliances.follow(auth)
+//		) yield as
+//
+//		whenReady(alliances) { as =>
+//			as.paramsIterator(auth).takeWhile()
+//		}
+//	}
 
 	it should "fetch wars" in {
 		val war = for(

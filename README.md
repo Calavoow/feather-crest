@@ -106,12 +106,9 @@ One important feature of the CREST, is the availability of very recent market da
 that is updated every 5 minutes.
 As an example we get the market information of the Hammerhead II item.
 ```scala
-// As usual get the Root first.
-val root = Root.fetch(None)
-
-val theForge : Future[Region] = async {
+val ham2Orders : Future[(MarketOrders, MarketOrders)] = async {
 	// Note: no Futures! But everything outside async will stil be asynchronous.
-	val aRoot: Root = await(root)
+	val aRoot: Root = await(Root.fetch())
 	val regions: Regions = await(aRoot.regions.follow(auth))
 	// Note that I use {{.get}} here, which could throw an exception,
 	// but simplifies this example.
@@ -121,39 +118,25 @@ val theForge : Future[Region] = async {
 	/**
 	 * Oops, from the type of {{theForge.marketSellLink}}
 	 * we see that we need an CrestLink[ItemType],
-	 * so lets handle that in _parallel_ (below).
+	 * so lets handle that in _parallel_.
+	 *
+	 * Async-await will automatically find independent asynchronous requests,
+	 * and run them in parallel.
 	 */
-	forge
-}
-
-// Get a link to the Itemtype of Hammerhead II's.
-val hammerhead2Link : Future[CrestLink[ItemType]] = async {
-	val aRoot : Root = await(root)
-	// Lets fetch the Hammerhead II
 	val itemTypes : ItemTypes = await(aRoot.itemTypes.follow(auth))
-	itemTypes.items.find(_.name == "Hammerhead II").get
-}
+	val ham2Link = itemTypes.items.find(_.name == "Hammerhead II").get
 
-// Now we put everything together and get the buy and sell orders.
-val buyAndSell : Future[(MarketOrders, MarketOrders)] = async {
-	val aTheForge : Region = await(theForge)
-	val aHammerhead2Link : CrestLink[ItemType] = await(hammerhead2Link)
 
-	val ham2Buy : MarketOrders = await(aTheForge.marketBuyLink(aHammerhead2Link)
+	// Now we put everything together and get the buy and sell orders.
+	val ham2Buy : MarketOrders = await(forge.marketBuyLink(ham2Link)
 		.follow(auth))
-	val ham2Sell : MarketOrders = await(aTheForge.marketSellLink(aHammerhead2Link)
+	val ham2Sell : MarketOrders = await(forge.marketSellLink(ham2Link)
 		.follow(auth))
 
-	// Print the first buy and sell order
-	println(ham2Buy.items.head)
-	println(ham2Sell.items.head)
-
+	// Invariant properties of the order
 	(ham2Buy, ham2Sell)
 }
 ```
-
-It is also possible to do the above in one large `async` block,
-but like this the `Region` and `Itemtype` fetching occurs in parallel.
 
 **Where to find more examples:** Look in the `src/test/scala` folder for some running examples.
 They look slightly different than the previous examples, because of the way test suites handles Futures.

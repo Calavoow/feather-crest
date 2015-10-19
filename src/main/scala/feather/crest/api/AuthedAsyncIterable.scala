@@ -64,4 +64,3 @@ trait AuthedAsyncIterable[T <: AuthedAsyncIterable[T]] {
 		self *:: rest
 	}
 }
-
