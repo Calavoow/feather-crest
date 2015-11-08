@@ -18,10 +18,10 @@ class CorporationSpec extends FlatSpec with Matchers with ScalaFutures with Lazy
 		val alliance = for(
 			r <- Root.fetch();
 			alliances <- r.alliances.follow(auth);
-			alli <- alliances.items.head.follow(auth)
-		) yield alli
+			alli <- alliances.items.head.href.follow(auth)
+		) yield (alliances,alli)
 
-		whenReady(alliance) { alli =>
+		whenReady(alliance) { case (alliances, alli) =>
 			alli.id.toString should equal(alli.id_str)
 			alli.executorCorporation.id.toString should equal(alli.executorCorporation.id_str)
 		}

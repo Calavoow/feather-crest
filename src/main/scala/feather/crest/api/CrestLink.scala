@@ -160,9 +160,12 @@ object CrestLink {
 		 */
 		implicit val corporationFormat: JsonFormat[Corporation] = jsonFormat6(Corporation)
 
-		implicit val allianceLinkFormat: JsonFormat[AlliancesPage.AllianceLink] = lazyFormat(jsonFormat5(AlliancesPage.AllianceLink))
-		implicit val allianceFormat: JsonFormat[Alliance] = jsonFormat14(Alliance.apply)
-		implicit val allianceCharacterFormat: JsonFormat[Alliance.Character] = jsonFormat7(Alliance.Character)
+		implicit val allianceLinkFormat: JsonFormat[AlliancesPage.AllianceLink] = lazyFormat(
+			jsonFormat(AlliancesPage.AllianceLink.apply _, "id_str", "shortName", "href", "id", "name"))
+		implicit val allianceHrefFormat: JsonFormat[AlliancesPage.AllianceHref] = lazyFormat(jsonFormat1(AlliancesPage.AllianceHref))
+		implicit val allianceFormat: JsonFormat[Alliance] = lazyFormat(jsonFormat14(Alliance.apply))
+		implicit val allianceCharacterFormat: JsonFormat[Alliance.Character] =
+			jsonFormat(Alliance.Character.apply _, "name", "isNPC", "href", "capsuleer", "portrait", "id", "id_str")
 
 		// implicit val warsFormat: JsonFormat[Wars] = lazyFormat(jsonFormat7(Wars.apply))
 		implicit val warFormat: JsonFormat[War] = lazyFormat(jsonFormat13(War.apply))
@@ -213,7 +216,8 @@ object CrestLink {
 			jsonFormat(MarketTypesPage.Type.apply _, "id_str", "href", "id", "name", "icon")
 
 		implicit val marketGroupsFormat: JsonFormat[MarketGroups] = lazyFormat(jsonFormat5(MarketGroups.apply))
-		implicit val marketGroupFormat: JsonFormat[MarketGroup] = lazyFormat(jsonFormat5(MarketGroup.apply))
+		implicit val marketGroupFormat: JsonFormat[MarketGroup] = lazyFormat(
+			jsonFormat(MarketGroup.apply _, "parentGroup", "href", "name", "types", "description"))
 
 		implicit val marketPricesFormat: JsonFormat[MarketPrices] = lazyFormat(jsonFormat5(MarketPrices.apply))
 		implicit val marketPricesItemFormat: JsonFormat[MarketPrices.Item] = jsonFormat3(MarketPrices.Item)
@@ -325,10 +329,17 @@ class CrestLink[T: JsonReader](val href: String) extends LazyLogging {
 					val cacheTime = response.getHeader("Access-Control-Max-Age").toLong
 					val cacheDuration = Duration(cacheTime, TimeUnit.SECONDS)
 					val jsonAst = response.getResponseBody.parseJson
-					val result = jsonAst.convertTo[T]
-					val genValue = () => Future.successful(result)
-					cache.apply(cacheKey(params), genValue, cacheDuration)
-					result
+					try {
+						val result = jsonAst.convertTo[T]
+						val genValue = () => Future.successful(result)
+						cache.apply(cacheKey(params), genValue, cacheDuration)
+						result
+					} catch {
+						case ex@DeserializationException(msg, _, _) =>
+							logger.error(s"Error deserializing $href")
+							logger.debug(s"Received ast: ${jsonAst.prettyPrint}")
+							throw ex
+					}
 				case 401 =>
 					val message = s"Unauthorized authentication token. CREST response body: ${response.getResponseBody}"
 					logger.warn(message)

@@ -18,7 +18,7 @@ class UniverseSpec extends FlatSpec with Matchers with ScalaFutures with LazyLog
 	implicit override val patienceConfig = PatienceConfig(timeout = 10 seconds)
 
 	"Universe" should "get regions, constellations, systems, and planets" in {
-		implicit val extendedPatience = PatienceConfig(timeout = 15 seconds)
+		implicit val patienceConfig = PatienceConfig(timeout = 15 seconds)
 		val reg = for(
 			r <- Root.fetch();
 			regions <- r.regions.follow(auth);

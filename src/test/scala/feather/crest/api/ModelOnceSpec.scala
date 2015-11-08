@@ -91,4 +91,5 @@ class ModelOnceSpec extends FlatSpec with Matchers with LazyLogging {
 		// At least 2k of the buy and sell orders must have no second page, to check this property.
 		waiter.await(dismissals(2000))
 	}
+
 }

@@ -11,7 +11,7 @@ which allow the user to easily manage a parallel environment.
 If you are not familiar with Futures, there is [an official Scala document](http://docs.scala-lang.org/overviews/core/futures.html) explaining them.
 This kind of approach is necessary,
 because it must not be the case that the application blocks on every API request,
-plus it possible to send many different request simultaneously.
+plus it enables sending many different request simultaneously.
 
 The CREST is modelled using small data classes, into which API results are stored.
 When these classes are instanced, the data is checked against the model typing.

@@ -38,7 +38,7 @@ class ItemTypeSpec extends FlatSpec with Matchers with ScalaFutures with LazyLog
 			allTypes.head.name should equal(headItemType.name)
 
 			// Lets check the first item type
-			itemTypes.items.head should equal (NamedCrestLink[ItemType]("https://crest-tq.eveonline.com/types/0/","#System"))
+			itemTypes.items.head should equal (NamedCrestLink[ItemType](href = "https://crest-tq.eveonline.com/types/0/", name = "#System"))
 		}
 	}
 

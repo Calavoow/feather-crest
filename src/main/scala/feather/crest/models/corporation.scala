@@ -3,8 +3,12 @@ package feather.crest.models
 import feather.crest.api.CrestLink
 import feather.crest.api.CrestLink.CrestProtocol._
 
+import feather.crest.models.{Character => CharacterPage}
+
 /**
  * An Eve Corporation
+ *
+ * @param href Link to this corporation's page. Currently unimplemented.
  */
 case class Corporation(
 	name: String,
@@ -17,12 +21,14 @@ case class Corporation(
 
 object AlliancesPage {
 	case class AllianceLink(
-		id_str: String,
+		id_str: Option[String],
 		shortName: String,
 		override val href: String,
 		id: Double,
 		name: String
 	) extends CrestLink[Alliance](href)
+
+	case class AllianceHref(href: AllianceLink)
 }
 
 //case class Alliances(
@@ -40,12 +46,12 @@ object Alliance {
 	case class Character(
 		name: String,
 		isNPC: Boolean,
-		href: String,
+		override val href: String,
 		capsuleer: UnImplementedCrestLink,
 		portrait: Picture,
 		id: Int,
 		id_str: String
-	)
+	) extends CrestLink[CharacterPage](href)
 
 }
 
@@ -62,7 +68,7 @@ case class Alliance(
 	creatorCorporation: Corporation,
 	url: String,
 	id_str: String,
-	creatorCharacter: Corporation,
+	creatorCharacter: Alliance.Character,
 	corporations: List[Corporation],
 	shortName: String,
 	id: Int,
@@ -114,7 +120,7 @@ case class War(
 	killmails: String,
 	id_str: String,
 	defender: War.Belligerent,
-	id: Double
+	id: Long
 ) {
 	def killMailsLink: CrestLink[KillMails] = {
 		CrestLink[KillMails](killmails)
