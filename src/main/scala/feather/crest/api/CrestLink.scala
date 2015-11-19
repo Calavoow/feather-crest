@@ -337,7 +337,6 @@ class CrestLink[T: JsonReader](val href: String) extends LazyLogging {
 					} catch {
 						case ex@DeserializationException(msg, _, _) =>
 							logger.error(s"Error deserializing $href")
-							logger.debug(s"Received ast: ${jsonAst.prettyPrint}")
 							throw ex
 					}
 				case 401 =>

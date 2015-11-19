@@ -22,6 +22,8 @@ class UniverseSpec extends FlatSpec with Matchers with ScalaFutures with LazyLog
 		val reg = for(
 			r <- Root.fetch();
 			regions <- r.regions.follow(auth);
+			// Take only the first 10 regions and follow the links.
+			// map Seq[Future] -> Future[Seq] with Future.sequence.
 			selectedRegions <- Future.sequence(regions.items.take(10).map(_.follow(auth)));
 			constellations <- Future.sequence(selectedRegions.flatMap(_.constellations).take(10).map(_.follow(auth)));
 			systems <- Future.sequence(constellations.flatMap(_.systems).take(10).map(_.follow(auth)));

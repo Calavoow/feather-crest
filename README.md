@@ -28,11 +28,12 @@ which is closely related to the intended interaction method of CREST.
 Because of static typing we can navigate the interface in a checked manner.
 A session should usually start with fetching the Root object.
 ```scala
+// Get an ExecutionContext for asynchronous operations.
 import scala.concurrent.ExecutionContext.Implicits.global
 
 val root = Root.fetch(None) // Future[Root]
 val endpointHref = root.map(_.crestEndpoint.href) // Future[String]
-// Lets print the contents of the Future.
+// Let's print the contents of the Future.
 endpointHref.foreach(println)
 // Asynchonrously prints "https://crest-tq.eveonline.com/"
 ```
@@ -50,48 +51,48 @@ val rootResult = Await.result(root, 10 seconds) // Root
 println(rootResult.crestEndpoint.href)
 ```
 
-### Regions (using for comprehensions)
+### Regions
 For the following examples an `auth : Some[String]` variable is assumed,
 which contains a string of the authentication token used to authenticate to the CREST API.
 
 We can get region information by following a link to Regions of the Root class.
-Using Scala for-constructs, that looks as follows
+Using Scala for-constructs (syntactic sugar for `map` and `flatMap`),
+that looks as follows
 ```scala
-val root = ... // Some Future[Root] instance
-val region = for(
-	rootRes <- root; // Extract Root
+for(
+	root <- Root.fetch(); // No authentication needed for Root.
 	region <- rootRes.regions.follow(auth) // Follow a CrestLink to Regions
-) yield {
+) {
 	// Asynchronously print the name of all regions
 	println(region.items.map(_.name).mkString(", "))
-	region
 }
 ```
 
 ### Item Types (using `map` and `flatMap`)
-We give another example, but now of fetching item types using `map`, `flatMap` and `foreach` instead:
+We give another example, but now of fetching item types using `map`,
+`flatMap` and `foreach` instead:
 ```scala
+// Conversions for Twitter Future and Try to Scala types.
 import feather.crest.api.TwitterConverters._
 
-val root = Root.fetch(None) // Future[Root] instance.
-// Follow the link to the itemtype page.
-val itemTypesPage = root.flatMap(_.itemTypes.follow(auth))
-/**
- * The itemtypes are split over multiple pages (there are 20k+ of them),
- * thus we create an asynchronous collection over all itemtype pages
- * (a Twitter [[com.twitter.concurrent.Spool]]).
- **/
-val itemTypesSpool = itemTypesPage.map(_.authedIterator(auth, retries=3))
-// Flatten all itemTypes into one big list.
-val allItemTypes = itemTypesSpool.flatMap { itemType =>
-	// Make one large List containing all itemTypes
-	// (And implicitly convert Twitter Future -> Scala Future)
-	itemType.map(_.items).reduceLeft(_ ++ _)
-}
-allItemTypes.foreach{ itemTypes =>
-	// Lets print the first and last item type
-	println(itemTypes.head)
-	println(itemTypes.last)
+for(
+	r <- Root.fetch();
+	// Follow the link the the itemTypes page
+	itemTypes <- r.itemTypes.follow(auth);
+	/**
+	 * The itemtypes are split over multiple pages (there are 30k+ of them),
+	 * thus we create an asynchronous collection over all itemtype pages
+	 * (a Twitter [[com.twitter.concurrent.Spool]]), and concatenate all items.
+	 **/
+	allTypes <- twitterToScalaFuture(
+		itemTypes.paramsIterator(auth, retries=2)
+			.map(_.items)
+			.reduceLeft(_ ++ _)
+	)
+) {
+	// Let's print the first and last item type
+	println(allTypes.head)
+	println(allTypes.last)
 }
 ```
 The key feature here is the collection that is returned by `authedIterator`, the `Spool`.
@@ -106,6 +107,7 @@ One important feature of the CREST, is the availability of very recent market da
 that is updated every 5 minutes.
 As an example we get the market information of the Hammerhead II item.
 ```scala
+// This will contain our Hammerhead II buy and sell orders.
 val ham2Orders : Future[(MarketOrders, MarketOrders)] = async {
 	// Note: no Futures! But everything outside async will stil be asynchronous.
 	val aRoot: Root = await(Root.fetch())
@@ -116,7 +118,7 @@ val ham2Orders : Future[(MarketOrders, MarketOrders)] = async {
 		.follow(auth))
 
 	/**
-	 * Oops, from the type of {{theForge.marketSellLink}}
+	 * From the type of [[Region.marketSellLink]]
 	 * we see that we need an CrestLink[ItemType],
 	 * so lets handle that in _parallel_.
 	 *
@@ -133,30 +135,56 @@ val ham2Orders : Future[(MarketOrders, MarketOrders)] = async {
 	val ham2Sell : MarketOrders = await(forge.marketSellLink(ham2Link)
 		.follow(auth))
 
-	// Invariant properties of the order
 	(ham2Buy, ham2Sell)
 }
 ```
 
-**Where to find more examples:** Look in the `src/test/scala` folder for some running examples.
+###Where to find more examples
+Look in the `src/test/scala` folder for some running examples.
 They look slightly different than the previous examples, because of the way test suites handles Futures.
+It pays off to get used to `map` and `flatMap` first, so you know how things work,
+and then switch to for-constructs (which just use `map` and `flatMap`)
+or `scala-async` for ease of use and readability.
 
 ## Implementation
-The following models have been implemented
+Models that have been implemented can be found in `src/main/scala/feather/crest/models`.
+Since adding models is relatively simple, please do suggest missing models,
+as identified by `TodoCrestLink`.
 
-1. Root CREST page
-1. Regions
-1. Items including
-	1. Types
+1. Character
+1. Corporation
+	1. Alliances
+	1. Campaigns
+	1. Corporations
+	1. Structures
+	1. Wars
+1. Industry
+	1. Facilities
+	1. Systems
+1. Item Types
 	1. Categories
 	1. Groups
-1. Market Orders
-1. Market History
+	1. Types
+1. Market
+	1. Groups
+	1. Orders
+	1. History
+	1. Prices
+1. Other
+	1. Killmails
+	1. Tournaments
+1. Root CREST page
+1. Universe
+	1. Planet
+	1. Regions
+	1. Solar System
 
 ## Todo List 
 - [ ] Modelling the entire CREST API.
 - [ ] Creating tests for all models.
 - [ ] Caching of API requests.
+	- [x] Implementation
+	- [ ] Tests
 - [ ] Improve interface.
 	- [ ] Authentication token.
 	- [ ] Hide disallowed methods.

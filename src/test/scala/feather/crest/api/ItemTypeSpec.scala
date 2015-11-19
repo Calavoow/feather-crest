@@ -31,14 +31,14 @@ class ItemTypeSpec extends FlatSpec with Matchers with ScalaFutures with LazyLog
 			headItemType <- allTypes.head.follow(auth)
 		) yield (itemTypes, allTypes, headItemType)
 
-		whenReady(itemTypes) { case (itemTypes, allTypes, headItemType) =>
+		whenReady(itemTypes) { case (iTypes, allTypes, headItemType) =>
 			// Check if no pagination
-			allTypes.size should equal(itemTypes.totalCount)
+			allTypes.size should equal(iTypes.totalCount)
 
 			allTypes.head.name should equal(headItemType.name)
 
 			// Lets check the first item type
-			itemTypes.items.head should equal (NamedCrestLink[ItemType](href = "https://crest-tq.eveonline.com/types/0/", name = "#System"))
+			iTypes.items.head should equal (NamedCrestLink[ItemType](href = "https://crest-tq.eveonline.com/types/0/", name = "#System"))
 		}
 	}
 
@@ -77,11 +77,10 @@ class ItemTypeSpec extends FlatSpec with Matchers with ScalaFutures with LazyLog
 
 	it should "be able to fetch the itemtype page of itemtype 984" in {
 		implicit val patienceConfig = PatienceConfig(timeout = 5 seconds)
-		val root = Root.fetch(None) // Future[Root] instance.
 		// Follow the link to the itemtype page.
 		val ham2 = for(
-				r <- root;
-				itemTypes <- r.itemTypes.follow(auth);
+				root <- Root.fetch();
+				itemTypes <- root.itemTypes.follow(auth);
 				hammerhead2 <- itemTypes.items(984).follow(auth)
 			) yield {
 					hammerhead2

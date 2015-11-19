@@ -158,9 +158,7 @@ case class MarketGroups(
  * @param href The Crest URL to the Crest instance.
  * @param name
  * @param types This link already has a parameter attached, use [[typesLink]] to construct a CrestLink.
- * @param description		implicit val marketGroupsFormat: JsonFormat[MarketGroups] = lazyFormat(jsonFormat5(MarketGroups.apply))
-		implicit val marketGroupFormat: JsonFormat[MarketGroup] = lazyFormat(
-			jsonFormat(MarketGroup.apply _, ""))
+ * @param description
  */
 case class MarketGroup(
 	parentGroup: CrestLink[MarketGroup],
