@@ -1,6 +1,7 @@
 package feather.crest.api
 
-import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.{Semaphore, TimeUnit}
 
 import com.typesafe.scalalogging.LazyLogging
 import dispatch._
@@ -10,12 +11,17 @@ import feather.crest.models._
 import feather.crest.util.Util
 import spray.json._
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{blocking, ExecutionContext, Future}
 import scala.concurrent.duration.Duration
 
 object CrestLink {
+
 	def apply[T : JsonReader](href : String) = new CrestLink[T](href)
 	case class CrestCommunicationException(errorCode: Int, msg: String) extends RuntimeException(msg)
+
+	// Rate limit set at 20 concurrent connections https://eveonline-third-party-documentation.readthedocs.org/en/latest/crest/intro/
+	private val lock = new Semaphore(20,true)
+	private val counter = new AtomicInteger(0)
 
 	/**
 	 * Defines the JSON deserialisation protocols related to the Crest classes.
@@ -105,11 +111,11 @@ object CrestLink {
 					new Root(
 						crestEndpoint = fieldMap("crestEndpoint").convertTo[CrestLink[Root]],
 						corporationRoles = fieldMap("corporationRoles").convertTo[UnImplementedCrestLink],
-						itemGroups = fieldMap("itemGroups").convertTo[CrestLink[ItemGroups]],
+						itemGroups = fieldMap("itemGroups").convertTo[ItemGroups],
 						channels = fieldMap("channels").convertTo[UnImplementedCrestLink],
 						corporations = fieldMap("corporations").convertTo[UnImplementedCrestLink],
-						alliances = fieldMap("alliances").convertTo[CrestLink[Alliances]],
-						itemTypes = fieldMap("itemTypes").convertTo[CrestLink[ItemTypes]],
+						alliances = fieldMap("alliances").convertTo[Alliances],
+						itemTypes = fieldMap("itemTypes").convertTo[ItemTypes],
 						decode = fieldMap("decode").convertTo[CrestLink[Decode]],
 						battleTheatres = fieldMap("battleTheatres").convertTo[UnImplementedCrestLink],
 						marketPrices = fieldMap("marketPrices").convertTo[CrestLink[MarketPrices]],
@@ -119,19 +125,21 @@ object CrestLink {
 						sovereignty = fieldMap("sovereignty").convertTo[Root.Sovereignty],
 						tournaments = fieldMap("tournaments").convertTo[CrestLink[Tournaments]],
 						map = fieldMap("map").convertTo[UnImplementedCrestLink],
-						wars = fieldMap("wars").convertTo[CrestLink[Wars]],
+						wars = fieldMap("wars").convertTo[Wars],
 						incursions = fieldMap("incursions").convertTo[TodoCrestLink],
 						authEndpoint = fieldMap("authEndpoint").convertTo[Link],
 						industry = fieldMap("industry").convertTo[Root.Industry],
 						clients = fieldMap("clients").convertTo[Root.Clients],
 						time = fieldMap("time").convertTo[UnImplementedCrestLink],
-						marketTypes = fieldMap("marketTypes").convertTo[CrestLink[MarketTypes]]
+						marketTypes = fieldMap("marketTypes").convertTo[MarketTypes]
 					)
 				} else {
 					throw new DeserializationException("Root JSON expected.")
 				}
 			}
 		}
+
+		implicit def crestCollectionFormat[T : JsonFormat]: JsonFormat[CrestCollection[T]] = jsonFormat(CrestCollection.apply[T] _, "href")
 
 		implicit def namedCrestLinkFormat[T: JsonFormat]: JsonFormat[NamedCrestLink[T]] = jsonFormat(NamedCrestLink.apply[T] _, "href", "name")
 		implicit def idCrestLinkFormat[T: JsonFormat]: JsonFormat[IdCrestLink[T]] = jsonFormat(IdCrestLink.apply[T] _, "id_str", "href", "id")
@@ -143,8 +151,8 @@ object CrestLink {
 		implicit val unCompletedFormat: JsonFormat[UncompletedCrestLink] = jsonFormat1(UncompletedCrestLink)
 		implicit val linkFormat: JsonFormat[Link] = jsonFormat1(Link)
 		implicit val pictureFormat: JsonFormat[Picture] = jsonFormat4(Picture)
-		implicit def paginatedResourceFormat[T: JsonFormat]: JsonFormat[PaginatedResource[T]] =
-			lazyFormat(jsonFormat(PaginatedResource.apply[T] _, "totalCount_str", "pageCount", "items", "totalCount", "pageCount_str", "next", "previous"))
+		implicit def paginatedResourceFormat[T: JsonFormat]: JsonFormat[Collection[T]] =
+			lazyFormat(jsonFormat(Collection.apply[T] _, "totalCount_str", "pageCount", "items", "totalCount", "pageCount_str", "next", "previous"))
 
 		/**
 		 * Character
@@ -160,9 +168,9 @@ object CrestLink {
 		 */
 		implicit val corporationFormat: JsonFormat[Corporation] = jsonFormat6(Corporation)
 
-		implicit val allianceLinkFormat: JsonFormat[AlliancesPage.AllianceLink] = lazyFormat(
-			jsonFormat(AlliancesPage.AllianceLink.apply _, "id_str", "shortName", "href", "id", "name"))
-		implicit val allianceHrefFormat: JsonFormat[AlliancesPage.AllianceHref] = lazyFormat(jsonFormat1(AlliancesPage.AllianceHref))
+		implicit val allianceLinkFormat: JsonFormat[AllianceLink] = lazyFormat(
+			jsonFormat(AllianceLink.apply _, "id_str", "shortName", "href", "id", "name"))
+//		implicit val allianceHrefFormat: JsonFormat[AlliancesPage.AllianceHref] = lazyFormat(jsonFormat1(AlliancesPage.AllianceHref))
 		implicit val allianceFormat: JsonFormat[Alliance] = lazyFormat(jsonFormat14(Alliance.apply))
 		implicit val allianceCharacterFormat: JsonFormat[Alliance.Character] =
 			jsonFormat(Alliance.Character.apply _, "name", "isNPC", "href", "capsuleer", "portrait", "id", "id_str")
@@ -211,13 +219,13 @@ object CrestLink {
 		implicit val marketHistoryFormat: JsonFormat[MarketHistory] = lazyFormat(jsonFormat5(MarketHistory.apply))
 		implicit val marketHistoryItemFormat: JsonFormat[MarketHistory.Item] = jsonFormat8(MarketHistory.Item)
 
-		implicit val marketTypesPageItemFormat: JsonFormat[MarketTypesPage.Item] = lazyFormat(jsonFormat2(MarketTypesPage.Item))
+		implicit val marketTypesPageItemFormat: JsonFormat[MarketTypesPage] = lazyFormat(jsonFormat2(MarketTypesPage.apply))
 		implicit val marketTypesPageTypeFormat: JsonFormat[MarketTypesPage.Type] =
-			jsonFormat(MarketTypesPage.Type.apply _, "id_str", "href", "id", "name", "icon")
+			jsonFormat(MarketTypesPage.Type.apply, "id_str", "href", "id", "name", "icon")
 
 		implicit val marketGroupsFormat: JsonFormat[MarketGroups] = lazyFormat(jsonFormat5(MarketGroups.apply))
 		implicit val marketGroupFormat: JsonFormat[MarketGroup] = lazyFormat(
-			jsonFormat(MarketGroup.apply _, "parentGroup", "href", "name", "types", "description"))
+			jsonFormat(MarketGroup.apply, "parentGroup", "href", "name", "types", "description"))
 
 		implicit val marketPricesFormat: JsonFormat[MarketPrices] = lazyFormat(jsonFormat5(MarketPrices.apply))
 		implicit val marketPricesItemFormat: JsonFormat[MarketPrices.Item] = jsonFormat3(MarketPrices.Item)
@@ -264,6 +272,7 @@ object CrestLink {
 }
 /**
  * CrestLink contains a crest URL to follow, creating another Crest instance
+ *
  * @param href The Crest URL to the Crest instance.
  * @tparam T The type of CrestContainer to construct.
  */
@@ -272,6 +281,7 @@ class CrestLink[T: JsonReader](val href: String) extends LazyLogging {
 	 * Follow executes a request to the CREST API to instantiate the linked Crest class T.
 	 *
 	 * On failure halts webpage construction with HTTP error code.
+	 *
 	 * @param auth The authentication key or None if unused.
 	 * @param retries The number of times to retry getting the item. Default = 1.
 	 * @param params Optional parameters to add to the request. Using this should *not* be necessary!
@@ -292,6 +302,7 @@ class CrestLink[T: JsonReader](val href: String) extends LazyLogging {
 	 *
 	 * Note that the result of the request *is* stored in the cache,
 	 * and thus the function does have a side-effect if the cache is not a stub.
+	 *
 	 * @param auth Authentication code of the EVE CREST endpoint.
 	 * @param retries The number of times to retry getting the item. Default = 1.
 	 * @param params GET Parameters for the request.
@@ -318,14 +329,18 @@ class CrestLink[T: JsonReader](val href: String) extends LazyLogging {
 		// Add the GET parameters
 		val finalRequest = authedRequest <<? params
 
+		blocking(CrestLink.lock.acquire())
 		val responseFut = Util.retryFuture(retries) {
 			Http(finalRequest)
+		}
+		responseFut.onComplete { _ =>
+			CrestLink.lock.release()
 		}
 
 		val parsedResult = responseFut.map { response ⇒
 			response.getStatusCode match {
 				case 200 =>
-					logger.debug(s"Response status: ${response.getStatusCode}: ${response.getStatusText}")
+					logger.debug(s"Response status of $href: ${response.getStatusCode}: ${response.getStatusText}")
 					val cacheTime = response.getHeader("Access-Control-Max-Age").toLong
 					val cacheDuration = Duration(cacheTime, TimeUnit.SECONDS)
 					val jsonAst = response.getResponseBody.parseJson
@@ -349,13 +364,14 @@ class CrestLink[T: JsonReader](val href: String) extends LazyLogging {
 
 		parsedResult.onFailure {
 			case x ⇒
-				logger.warn(s"Error following link: $this\n${x.getMessage}\n${x.getStackTrace.mkString("","\n","\n")}")
+				logger.warn(s"Error following link: $this\n${x.getMessage}\n${x.getStackTrace.mkString("", "\n", "\n")}")
 		}
 		parsedResult
 	}
 
 	/**
 	 * Constructs a fake url string, which uniquely identifies the real request.
+	 *
 	 * @param params The parameters found in the request.
 	 * @return A unique fake url for the given `href` and `params`.
 	 */
@@ -385,7 +401,7 @@ class CrestLinkParams[T: JsonReader](href: String, params: Map[String,String]) e
 	/**
 	 * Follow the crest link to construct a model of T.
 	 *
-	 * This function could not be overloaded without params, because of default arguments.
+	 * Because of already bound parameters, provide params at your own risk.
 	 *
 	 * @param auth The authentication key or None if unused.
 	 * @param params Optional parameters to add to the request. Using this should *not* be necessary!
@@ -405,6 +421,7 @@ class CrestLinkParams[T: JsonReader](href: String, params: Map[String,String]) e
 	 *
 	 * Note that the result of the request *is* stored in the cache,
 	 * and thus the function does have a side-effect if the cache is not a stub.
+	 *
 	 * @param auth Authentication code of the EVE CREST endpoint.
 	 * @param params GET Parameters for the request.
 	 * @param ec The execution context for the Futures.

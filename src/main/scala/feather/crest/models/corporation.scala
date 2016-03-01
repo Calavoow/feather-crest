@@ -1,6 +1,6 @@
 package feather.crest.models
 
-import feather.crest.api.CrestLink
+import feather.crest.api.{CrestCollection, CrestLink}
 import feather.crest.api.CrestLink.CrestProtocol._
 
 import feather.crest.models.{Character => CharacterPage}
@@ -19,17 +19,13 @@ case class Corporation(
 	id: Int
 )
 
-object AlliancesPage {
-	case class AllianceLink(
-		id_str: Option[String],
-		shortName: String,
-		override val href: String,
-		id: Double,
-		name: String
-	) extends CrestLink[Alliance](href)
-
-	case class AllianceHref(href: AllianceLink)
-}
+case class AllianceLink(
+	id_str: Option[String],
+	shortName: String,
+	override val href: String,
+	id: Double,
+	name: String
+) extends CrestLink[Alliance](href)
 
 //case class Alliances(
 //	totalCount_str: String,
@@ -108,10 +104,10 @@ object War {
 }
 
 case class War(
-	timeFinished: String,
+	timeFinished: Option[String],
 	openForAllies: Boolean,
 	allies: Option[List[War.Ally]],
-	timeStarted: String,
+	timeStarted: Option[String],
 	allyCount: Int,
 	timeDeclared: String,
 	aggressor: War.Belligerent,
@@ -122,8 +118,8 @@ case class War(
 	defender: War.Belligerent,
 	id: Long
 ) {
-	def killMailsLink: CrestLink[KillMails] = {
-		CrestLink[KillMails](killmails)
+	def killMailsLink: KillMails = {
+		new KillMails(killmails)
 	}
 }
 
@@ -157,6 +153,7 @@ object Structures {
 
 /**
  * "This lists every structure in New Eden that is contributing to sovereignty be it a TCU, IHub, or a station."
+ *
  * @see https://developers.eveonline.com/blog/article/aegis-sovereignty-api-changes
  */
 case class Structures (
@@ -188,7 +185,6 @@ object Campaigns {
 	 * @param eventType is 1,2,3 or 4.
 	 *                  If 1-3 then the [[Campaigns.Item]] has [[attackers]] and [[defender]],
 	 *                  if 4 then it has [[scores]].
-	 *
 	 * @see https://developers.eveonline.com/blog/article/aegis-sovereignty-api-changes
 	 */
 	case class Item(

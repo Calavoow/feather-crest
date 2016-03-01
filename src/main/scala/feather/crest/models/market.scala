@@ -1,9 +1,12 @@
 package feather.crest.models
 
+import java.net.{URI, URL}
+
 import com.typesafe.scalalogging.LazyLogging
 import dispatch.StatusCode
-import feather.crest.api.{CrestLinkParams, AuthedAsyncIterable, CrestLink}
+import feather.crest.api.{CrestCollection, CrestLinkParams, CrestLink}
 import feather.crest.api.CrestLink.CrestProtocol._
+import feather.crest.util.Util
 
 import scala.concurrent.{Future, ExecutionContext}
 
@@ -54,7 +57,8 @@ object MarketOrders {
  * Experimentally we have checked if pagination occurs,
  * but that does not seem the case.
  * Thus we have removed the pagination fields.
- * @see The associated ModelOnce specification test.
+  *
+  * @see The associated ModelOnce specification test.
  */
 case class MarketOrders(totalCount_str: String,
 	items: List[MarketOrders.Item],
@@ -81,7 +85,8 @@ object MarketHistory {
 	 * A Failure means that the request has not been completed (and may be retried).
 	 * A Success(None) means that there was no history for the item.
 	 * Any other result simply has a history for an item.
-	 * @param regionLink A CrestLink to the region for which to get market history.
+	  *
+	  * @param regionLink A CrestLink to the region for which to get market history.
 	 * @param typeLink A CrestLink to the itemtype for which to get market history.
 	 * @param auth The authentication code.
 	 * @return
@@ -137,13 +142,16 @@ object MarketTypesPage {
 		name: String,
 		icon: Link
 	) extends CrestLink[ItemType](href)
-
-	case class Item(
-		marketGroup: IdCrestLink[MarketGroup],
-		`type`: Type
-	)
 }
 
+case class MarketTypesPage (
+	marketGroup: IdCrestLink[MarketGroup],
+	`type`: MarketTypesPage.Type
+)
+
+/**
+  * There is only one page of MarketGroups, so no pagination required.
+  */
 case class MarketGroups(
 	totalCount_str: String,
 	items: List[MarketGroup],
@@ -154,26 +162,27 @@ case class MarketGroups(
 
 /**
  * A group of market items.
+ *
  * @param parentGroup
  * @param href The Crest URL to the Crest instance.
  * @param name
- * @param types This link already has a parameter attached, use [[typesLink]] to construct a CrestLink.
+ * @param types A link to the market types in this group.
+ *              Note that this link already has a parameter attached, so custom parameter will break the link.
  * @param description
+ * @todo Figure out the types field with bound parameters.
  */
 case class MarketGroup(
-	parentGroup: CrestLink[MarketGroup],
+	parentGroup: Option[CrestLink[MarketGroup]],
 	override val href: String, // Link to itself
 	name: String,
-	types: UncompletedCrestLink,
+	types: MarketTypes,
 	description: String
-) extends CrestLink[MarketGroup](href) {
-	def typesLink = new CrestLinkParams[MarketTypes](types.href, Map.empty)
-}
+) extends CrestLink[MarketGroup](href)
 
 object MarketPrices {
 	case class Item(
-		adjustedPrice: Double,
-		averagePrice: Double,
+		adjustedPrice: Option[Double],
+		averagePrice: Option[Double],
 		`type`: IdNamedCrestLink[ItemType]
 	)
 

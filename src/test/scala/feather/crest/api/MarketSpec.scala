@@ -1,7 +1,6 @@
 package feather.crest.api
 
 import com.typesafe.scalalogging.LazyLogging
-import feather.crest.api.TwitterConverters._
 import feather.crest.models._
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{FlatSpec, Matchers}
@@ -34,8 +33,11 @@ class MarketSpec extends FlatSpec with Matchers with ScalaFutures with LazyLoggi
 			 *
 			 * Async-await will automatically find independent asynchronous requests,
 			 * and run them in parallel.
-			 */
-			val itemTypes : ItemTypes = await(aRoot.itemTypes.follow(auth))
+			 *
+			 * Note: I know that the item is on the first page of itemtypes, this saves me a little time and simplifies things.
+			 **/
+			val itemTypes = await(aRoot.itemTypes.construct(auth).head)
+			// Then we find the respective item in the list.
 			val ham2Link = itemTypes.items.find(_.name == "Hammerhead II").get
 
 
@@ -93,16 +95,16 @@ class MarketSpec extends FlatSpec with Matchers with ScalaFutures with LazyLoggi
 			r <- Root.fetch();
 			marketGroups <- r.marketGroups.follow(auth);
 			marketGroup <- marketGroups.items.head.follow(auth);
-			marketType <- marketGroup.typesLink.follow(auth);
-			allItemTypes <- marketType.paramsIterator(auth).map(_.items).reduceLeft(_ ++ _)
-		) yield (marketGroups, marketType, allItemTypes)
+			allMarketTypes <- Future.sequence(marketGroup.types.construct(auth))
+		) yield (marketGroups, allMarketTypes)
 
-		whenReady(marketG) { case(marketGroups, marketType, allItemTypes) =>
+		whenReady(marketG) { case(marketGroups, allMarketTypes) =>
 			// Check if not paginated
 			marketGroups.items.size should equal(marketGroups.totalCount)
 
 			// Check if all market types present.
-			allItemTypes.size should equal(marketType.totalCount)
+			val list = allMarketTypes.map(_.items).reduce(_ ++ _)
+			list.size should equal(allMarketTypes.head.totalCount)
 		}
 	}
 
@@ -117,8 +119,8 @@ class MarketSpec extends FlatSpec with Matchers with ScalaFutures with LazyLoggi
 			p.totalCount should equal(p.items.size)
 
 			p.items.foreach { it =>
-				it.adjustedPrice.isNaN should be (false)
-				it.averagePrice.isNaN should be (false)
+				it.adjustedPrice.foreach(x => x.isNaN should be (false))
+				it.averagePrice.foreach(x => x.isNaN should be (false))
 				it.`type`.id_str should equal(it.`type`.id.toString)
 			}
 		}

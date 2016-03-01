@@ -1,5 +1,7 @@
 package feather.crest.util
 
+import java.net.URLDecoder
+
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Try
 import scala.util.control.NonFatal
@@ -8,6 +10,7 @@ object Util {
 
 	/**
 	 * Recover a Failure of f up to `times`.
+ *
 	 * @param times The number of times to retry (thus total calls = 1 + retries)
 	 * @param f The function to obtain the Try of T.
 	 * @tparam T The Try type
@@ -41,5 +44,12 @@ object Util {
 		val res = f
 		if(res.isEmpty) throw new SkipException
 		else res
+	}
+
+	def uriQueryToMap(params: String) : Map[String,String] = {
+		params.split("&").map { param =>
+			val splitParam = param.split("=")
+			URLDecoder.decode(splitParam(0), "UTF-8") -> URLDecoder.decode(splitParam(1), "UTF-8")
+		}.toMap
 	}
 }

@@ -1,7 +1,6 @@
 package feather.crest.api
 
 import com.typesafe.scalalogging.LazyLogging
-import feather.crest.api.TwitterConverters._
 import feather.crest.models._
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{FlatSpec, Matchers}

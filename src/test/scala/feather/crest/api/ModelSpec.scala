@@ -9,7 +9,6 @@ import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.io.Source
 import scala.language.postfixOps
-import feather.crest.api.TwitterConverters._
 import feather.crest.api.CrestLink.CrestProtocol._
 
 class ModelSpec extends FlatSpec with Matchers with ScalaFutures with LazyLogging {

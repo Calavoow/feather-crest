@@ -1,7 +1,10 @@
 package feather.crest.models
 
 import spray.json.JsonReader
-import feather.crest.api.{AuthedAsyncIterable, CrestLink}
+import feather.crest.api.CrestLink
+
+import scala.collection.mutable.ListBuffer
+import scala.collection.{LinearSeqOptimized, LinearSeqLike, mutable, SeqLike}
 
 /**
  * To follow this CrestLink some construction is required.
@@ -12,6 +15,7 @@ case class UncompletedCrestLink(href: String)
 
 /**
  * A CrestLink with a name field.
+ *
  * @param href The Crest URL to the next link
  * @param name The name field.
  * @tparam T The type of CrestContainer to construct.
@@ -20,6 +24,7 @@ case class NamedCrestLink[T: JsonReader](override val href: String, name: String
 
 /**
  * A [[CrestLink]] which has an [[id]] of the thing being linked.
+ *
  * @param id_str The id stringified.
  * @param href The Crest URL to the Crest instance.
  * @param id The id of the item.
@@ -33,6 +38,7 @@ case class IdCrestLink[T: JsonReader](
 
 /**
  * A [[CrestLink]] that also has an [[id]] and the [[name]] of the thing being linked.
+ *
  * @param id_str id stringified
  * @param href The Crest URL to the item
  * @param id The id of the item
@@ -85,16 +91,17 @@ case class Picture(
  * A resource that is listed across many pages.
  *
  * Do not use this directly in a model. Instead make a type alias in the package object.
+ *
  * @example [[ItemTypes]]
  * @todo Make next and previous the same type as 'this'. (Maybe type classes)
  * @tparam T The type of the Model being iterated over.
  */
-case class PaginatedResource[T](
+case class Collection[T](
 	totalCount_str: String,
 	pageCount: Int,
 	items: List[T],
 	totalCount: Int,
 	pageCount_str: String,
-	next: Option[CrestLink[PaginatedResource[T]]],
-	previous: Option[CrestLink[PaginatedResource[T]]]
-) extends AuthedAsyncIterable[PaginatedResource[T]]
+	next: Option[CrestLink[Collection[T]]],
+	previous: Option[CrestLink[Collection[T]]]
+)

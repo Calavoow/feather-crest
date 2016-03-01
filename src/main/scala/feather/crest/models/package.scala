@@ -1,10 +1,12 @@
 package feather.crest
 
+import feather.crest.api.CrestCollection
+
 package object models {
-	type ItemTypes = PaginatedResource[NamedCrestLink[ItemType]]
-	type ItemGroups = PaginatedResource[NamedCrestLink[ItemGroup]]
-	type Alliances = PaginatedResource[AlliancesPage.AllianceHref]
-	type MarketTypes = PaginatedResource[MarketTypesPage.Item]
-	type KillMails = PaginatedResource[IdCrestLink[KillMail]]
-	type Wars = PaginatedResource[IdCrestLink[War]]
+	type ItemTypes = CrestCollection[NamedCrestLink[ItemType]]
+	type ItemGroups = CrestCollection[NamedCrestLink[ItemGroup]]
+	type Alliances = CrestCollection[AllianceLink]
+	type MarketTypes = CrestCollection[MarketTypesPage]
+	type KillMails = CrestCollection[IdCrestLink[KillMail]]
+	type Wars = CrestCollection[IdCrestLink[War]]
 }

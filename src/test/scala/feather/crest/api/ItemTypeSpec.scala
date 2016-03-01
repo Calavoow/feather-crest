@@ -5,9 +5,9 @@ import feather.crest.models._
 import feather.crest.api.CrestLink.CrestProtocol._
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{FlatSpec, Matchers}
-import feather.crest.api.TwitterConverters._
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
@@ -19,26 +19,18 @@ class ItemTypeSpec extends FlatSpec with Matchers with ScalaFutures with LazyLog
 	"itemTypes" should "fetch an itemtype" in {
 		val itemTypes = for(
 			r <- Root.fetch();
-			// Follow the link the the itemTypes page
-			itemTypes <- r.itemTypes.follow(auth);
-			/**
-			 * The itemtypes are split over multiple pages (there are 30k+ of them),
-			 * thus we create an asynchronous collection over all itemtype pages
-			 * (a Twitter [[com.twitter.concurrent.Spool]]), and concatenate all items.
-			 **/
-			allTypes <- twitterToScalaFuture(itemTypes.paramsIterator(auth, retries=2).map(_.items).reduceLeft(_ ++ _));
+			// Follow the link the the itemTypes page, which is paginated because it has many items (30k+).
+			itemTypes <- Future.sequence(r.itemTypes.construct(auth))
 			// Follow the link to the first [[feather.crest.models.ItemType]] page.
-			headItemType <- allTypes.head.follow(auth)
-		) yield (itemTypes, allTypes, headItemType)
+		) yield itemTypes
 
-		whenReady(itemTypes) { case (iTypes, allTypes, headItemType) =>
-			// Check if no pagination
-			allTypes.size should equal(iTypes.totalCount)
+		whenReady(itemTypes) { iTypes =>
+			// Check if we fetched all itemtypes.
+			val allTypes = iTypes.flatMap(_.items)
+			allTypes.size should equal(iTypes.head.totalCount)
 
-			allTypes.head.name should equal(headItemType.name)
-
-			// Lets check the first item type
-			iTypes.items.head should equal (NamedCrestLink[ItemType](href = "https://crest-tq.eveonline.com/types/0/", name = "#System"))
+			// Check the first item type
+			allTypes.head should equal (NamedCrestLink[ItemType](href = "https://crest-tq.eveonline.com/types/0/", name = "#System"))
 		}
 	}
 
@@ -61,14 +53,14 @@ class ItemTypeSpec extends FlatSpec with Matchers with ScalaFutures with LazyLog
 	it should "fetch an itemGroup" in {
 		val groups = for(
 			r <- Root.fetch();
-			gs <- r.itemGroups.follow(auth);
-			allGroups <- twitterToScalaFuture(gs.paramsIterator(auth).map(_.items).reduceLeft(_ ++ _));
-			headGroup <- allGroups.head.follow(auth)
-		) yield (gs, allGroups, headGroup)
+			gs <- Future.sequence(r.itemGroups.construct(auth));
+			headGroup <- gs.map(_.items).head.head.follow(auth)
+		) yield (gs, headGroup)
 
-		whenReady(groups) { case (gs, allGroups, headGroup) =>
+		whenReady(groups) { case (gs, headGroup) =>
+			val allGroups = gs.map(_.items).reduceLeft(_ ++ _)
 			// Check if no pagination
-			allGroups.size should equal(gs.totalCount)
+			allGroups.size should equal(gs.head.totalCount)
 
 			allGroups.head.name should equal(headGroup.name)
 		}

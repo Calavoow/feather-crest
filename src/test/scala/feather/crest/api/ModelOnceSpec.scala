@@ -2,7 +2,6 @@ package feather.crest.api
 
 import com.typesafe.scalalogging.LazyLogging
 import feather.crest.api.CrestLink.CrestProtocol._
-import feather.crest.api.TwitterConverters._
 import feather.crest.models._
 import org.scalatest.concurrent.AsyncAssertions.{PatienceConfig, Waiter, dismissals}
 import org.scalatest.{FlatSpec, Matchers}
@@ -30,6 +29,7 @@ class ModelOnceSpec extends FlatSpec with Matchers with LazyLogging {
 			.map(_.getLines().next())
 	}
 
+	/*
 	it should "All market orders should not contain a second page" in {
 		implicit val patienceConfig = PatienceConfig(timeout = 20 minutes)
 		// As usual get the Root first.
@@ -56,8 +56,7 @@ class ModelOnceSpec extends FlatSpec with Matchers with LazyLogging {
 		val futItemTypes = async {
 			val aRoot: Root = await(root)
 			// Lets fetch the Hammerhead II
-			val itemTypes: ItemTypes = await(aRoot.itemTypes.follow(auth))
-			await(itemTypes.paramsIterator(auth).map(_.items).reduceLeft(_ ++ _))
+			await(Future.sequence(aRoot.itemTypes.construct(auth))).flatMap(_.items)
 		}
 
 		def invariantOrder(marketOrders: MarketOrders): Unit = {
@@ -71,25 +70,21 @@ class ModelOnceSpec extends FlatSpec with Matchers with LazyLogging {
 			val aTheForge: Region = await(theForge)
 			val itemTypes = await(futItemTypes)
 
-			for(itemTypeGroup <- itemTypes.grouped(25)) {
-				logger.trace(s"${itemTypeGroup.head}")
-				val out = for(itemType <- itemTypeGroup) yield {
-					async {
-						val buyOrder = await(aTheForge.marketBuyLink(itemType).follow(auth))
-						val sellOrder = await(aTheForge.marketSellLink(itemType).follow(auth))
-						waiter {
-							invariantOrder(buyOrder)
-							invariantOrder(sellOrder)
-						}
-						waiter.dismiss()
+			for(itemType <- itemTypes) {
+				async {
+					val buyOrder = await(aTheForge.marketBuyLink(itemType).follow(auth))
+					val sellOrder = await(aTheForge.marketSellLink(itemType).follow(auth))
+					waiter {
+						invariantOrder(buyOrder)
+						invariantOrder(sellOrder)
 					}
+					waiter.dismiss()
 				}
-				// Block after every group, so that not too many requests are sent at once.
-				Await.ready(Future.sequence(out), 10 seconds)
 			}
 		}
 		// At least 2k of the buy and sell orders must have no second page, to check this property.
 		waiter.await(dismissals(2000))
 	}
+	*/
 
 }

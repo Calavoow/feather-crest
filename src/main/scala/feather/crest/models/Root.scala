@@ -1,11 +1,21 @@
 package feather.crest.models
 
-import feather.crest.api.CrestLink
+import javax.management.remote.rmi._RMIConnection_Stub
+
+import feather.crest.api.{CrestCollection, CrestLink}
 import feather.crest.api.CrestLink.CrestProtocol._
 
 import scala.concurrent.{Future, ExecutionContext}
 
 object Root {
+	/**
+	 * Fetch a Root object from the default CREST endpoint.
+	 *
+	 * The user can construct a custom root object from another endpoint by constructing
+	 * ```
+	 * CrestLink[Root](customEndpoint)
+	 * ```
+	 */
 	def fetch(auth: Option[String] = None)(implicit ec: ExecutionContext): Future[Root] = {
 		// The only "static" CREST URL.
 		val endpoint = "https://crest-tq.eveonline.com/"
@@ -41,11 +51,11 @@ object Root {
 case class Root(
 	crestEndpoint: CrestLink[Root],
 	corporationRoles: UnImplementedCrestLink,
-	itemGroups: CrestLink[ItemGroups],
+	itemGroups: ItemGroups,
 	channels: UnImplementedCrestLink,
 	corporations: UnImplementedCrestLink,
-	alliances: CrestLink[Alliances],
-	itemTypes: CrestLink[ItemTypes],
+	alliances: Alliances,
+	itemTypes: ItemTypes,
 	decode: CrestLink[Decode],
 	battleTheatres: UnImplementedCrestLink,
 	marketPrices: CrestLink[MarketPrices],
@@ -55,12 +65,12 @@ case class Root(
 	sovereignty: Root.Sovereignty,
 	tournaments: CrestLink[Tournaments],
 	map: UnImplementedCrestLink,
-	wars: CrestLink[Wars],
+	wars: Wars,
 	incursions: TodoCrestLink,
 	authEndpoint: Link,
 	industry: Root.Industry,
 	clients: Root.Clients,
 	time: UnImplementedCrestLink,
-	marketTypes: CrestLink[MarketTypes]
+	marketTypes: MarketTypes
 )
 

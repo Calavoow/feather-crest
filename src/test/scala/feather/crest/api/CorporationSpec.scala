@@ -6,6 +6,7 @@ import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{FlatSpec, Matchers}
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
@@ -17,9 +18,9 @@ class CorporationSpec extends FlatSpec with Matchers with ScalaFutures with Lazy
 	"corporation" should "fetch alliances, alliance and corp" in {
 		val alliance = for(
 			r <- Root.fetch();
-			alliances <- r.alliances.follow(auth);
-			alli <- alliances.items.head.href.follow(auth)
-		) yield (alliances,alli)
+			firstAlliances <- r.alliances.construct(auth).head;
+			alli <- firstAlliances.items.head.follow(auth)
+		) yield (firstAlliances,alli)
 
 		whenReady(alliance) { case (alliances, alli) =>
 			alli.id.toString should equal(alli.id_str)
@@ -27,16 +28,26 @@ class CorporationSpec extends FlatSpec with Matchers with ScalaFutures with Lazy
 		}
 	}
 
-//	it should "fetch a killmail" in {
-//		val alliances = for(
-//			r <- Root.fetch();
-//			as <- r.alliances.follow(auth)
-//		) yield as
-//
-//		whenReady(alliances) { as =>
-//			as.paramsIterator(auth).takeWhile()
-//		}
-//	}
+	it should "fetch killmail of page 24 of wars" in {
+		implicit val patienceConfig = PatienceConfig(timeout = 20 seconds)
+		val futKillMails = for(
+			r <- Root.fetch();
+			wars <- r.wars.construct(auth).drop(24).head;
+			war <- Future.traverse(wars.items)(_.follow(auth));
+			kills <- Future.sequence(war.map(_.killMailsLink.follow(auth))); // Fetch only the first page of killmails
+			kmList <- Future.traverse(kills.flatMap(_.items))(_.follow(auth))
+		) yield kmList
+
+		whenReady(futKillMails) { killLists =>
+			// At least one km should be tested.
+			killLists should not be empty
+
+			killLists.foreach { killmail =>
+				killmail.war.isDefined should be(true) // since we retrieve the killmails through wars
+				killmail.victim.damageTaken.toString should equal(killmail.victim.damageTaken_str)
+			}
+		}
+	}
 
 	it should "fetch wars" in {
 		val war = for(

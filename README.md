@@ -68,9 +68,8 @@ for(
 }
 ```
 
-### Item Types (using `map` and `flatMap`)
-We give another example, but now of fetching item types using `map`,
-`flatMap` and `foreach` instead:
+### Item Types
+We give another example, but now of fetching item types:
 ```scala
 // Conversions for Twitter Future and Try to Scala types.
 import feather.crest.api.TwitterConverters._
