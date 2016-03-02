@@ -1,6 +1,6 @@
 package feather.crest.models
 
-import feather.crest.api.CrestLink
+import feather.crest.api.{CrestPost, CrestLink}
 import feather.crest.api.CrestLink.CrestProtocol._
 
 case class Decode(character: CrestLink[Character])
@@ -34,7 +34,7 @@ object Character {
 case class Character(
 	standings: TodoCrestLink,
 	bloodLine: Character.BloodLine,
-	waypoints: TodoCrestLink,
+	waypoints: CrestPost[Waypoints],
 	`private`: UnImplementedCrestLink,
 	channels: UnImplementedCrestLink,
 	// href: String, // Refers to this page? Left out because of 23-arity
@@ -45,7 +45,7 @@ case class Character(
 	fittings: TodoCrestLink,
 	contacts: TodoCrestLink,
 	corporation: Corporation,
-	location: TodoCrestLink,
+	location: CrestLink[Location],
 	mail: TodoCrestLink,
 	capsuleer: UnImplementedCrestLink,
 	vivox: UnImplementedCrestLink,
@@ -55,6 +55,16 @@ case class Character(
 	gender: Int,
 	race: Character.Race,
 	deposit: UnImplementedCrestLink
+)
+
+case class Location(
+	solarSystem: Option[IdNamedCrestLink[SolarSystem]]
+)
+
+case class Waypoints(
+	clearOtherWaypoints: Boolean,
+	first: Boolean,
+	solarSystem: IdCrestLink[SolarSystem]
 )
 
 

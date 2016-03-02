@@ -1,6 +1,5 @@
 package feather.crest.api
 
-import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.{Semaphore, TimeUnit}
 
 import com.typesafe.scalalogging.LazyLogging
@@ -20,8 +19,7 @@ object CrestLink {
 	case class CrestCommunicationException(errorCode: Int, msg: String) extends RuntimeException(msg)
 
 	// Rate limit set at 20 concurrent connections https://eveonline-third-party-documentation.readthedocs.org/en/latest/crest/intro/
-	private val lock = new Semaphore(20,true)
-	private val counter = new AtomicInteger(0)
+	protected[api] val lock = new Semaphore(20,true)
 
 	/**
 	 * Defines the JSON deserialisation protocols related to the Crest classes.
@@ -141,6 +139,8 @@ object CrestLink {
 
 		implicit def crestCollectionFormat[T : JsonFormat]: JsonFormat[CrestCollection[T]] = jsonFormat(CrestCollection.apply[T] _, "href")
 
+		implicit def crestPostFormat[T: JsonFormat] : JsonFormat[CrestPost[T]] = jsonFormat(CrestPost.apply[T] _, "href")
+
 		implicit def namedCrestLinkFormat[T: JsonFormat]: JsonFormat[NamedCrestLink[T]] = jsonFormat(NamedCrestLink.apply[T] _, "href", "name")
 		implicit def idCrestLinkFormat[T: JsonFormat]: JsonFormat[IdCrestLink[T]] = jsonFormat(IdCrestLink.apply[T] _, "id_str", "href", "id")
 		implicit def idNamedCrestLinkFormat[T: JsonFormat]: JsonFormat[IdNamedCrestLink[T]] = jsonFormat(IdNamedCrestLink.apply[T] _, "id_str", "href", "id", "name")
@@ -162,6 +162,10 @@ object CrestLink {
 		implicit val characterFormat: JsonFormat[Character] = lazyFormat(jsonFormat22(Character.apply))
 		implicit val characterBloodlineFormat: JsonFormat[Character.BloodLine] = jsonFormat3(Character.BloodLine)
 		implicit val characterRaceFormat: JsonFormat[Character.Race] = jsonFormat3(Character.Race)
+
+		implicit val locationFormat: JsonFormat[Location] = lazyFormat(jsonFormat1(Location))
+
+		implicit val waypointsFormat: JsonFormat[Waypoints] = lazyFormat(jsonFormat3(Waypoints))
 
 		/**
 		 * Corporations
@@ -318,7 +322,7 @@ class CrestLink[T: JsonReader](val href: String) extends LazyLogging {
 
 		val acceptRequest = getRequest.setHeaders(Map(
 			"Accept" -> Seq("application/json"),
-			"Content-Type" -> Seq("application/vnd.ccp.eve.Api-v3+json; charset=utf-8"),
+			"Content-Type" -> Seq("application/vnd.ccp.eve.Api-v3+json; charset=UTF-8"),
 			"User-Agent" -> Seq("feather-crest/0.1")
 		))
 		// If the auth is set then add it as parameter.
