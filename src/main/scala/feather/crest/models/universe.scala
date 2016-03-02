@@ -38,11 +38,11 @@ case class SolarSystem(
 	stats: UnImplementedCrestLink,
 	name: String,
 	securityStatus: Double,
-	securityClass: String,
+	securityClass: Option[String],
 	href: String, // A link to itself?
 	planets: List[CrestLink[Planet]],
 	position: Position,
-	sovereignty: IdNamedCrestLink[Alliance],
+	sovereignty: Option[IdNamedCrestLink[Alliance]],
 	constellation: CrestLink[Constellation]
 )
 

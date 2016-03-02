@@ -32,5 +32,5 @@ libraryDependencies ++= Seq(
 	// Testing
 	"org.scalatest" % "scalatest_2.11" % "2.2.4" % "test",
 	"ch.qos.logback" % "logback-classic" % "1.1.2" % "test",
-	"org.scala-lang.modules" %% "scala-async" % "0.9.2"
+	"org.scala-lang.modules" %% "scala-async" % "0.9.2" % "test"
 )

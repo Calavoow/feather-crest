@@ -9,7 +9,7 @@ object IndustryFacilities {
 		solarSystem: ID,
 		name: String,
 		region: ID,
-		tax: Double,
+		tax: Option[Double],
 		facilityID_str: String,
 		owner: ID,
 		`type`: ID

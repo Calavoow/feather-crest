@@ -29,8 +29,7 @@ class ModelOnceSpec extends FlatSpec with Matchers with LazyLogging {
 			.map(_.getLines().next())
 	}
 
-	/*
-	it should "All market orders should not contain a second page" in {
+	"The Market" should "should not contain a second page in the first 2000 market orders" in {
 		implicit val patienceConfig = PatienceConfig(timeout = 20 minutes)
 		// As usual get the Root first.
 		val root = Root.fetch(None)
@@ -85,6 +84,5 @@ class ModelOnceSpec extends FlatSpec with Matchers with LazyLogging {
 		// At least 2k of the buy and sell orders must have no second page, to check this property.
 		waiter.await(dismissals(2000))
 	}
-	*/
 
 }

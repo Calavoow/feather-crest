@@ -22,7 +22,7 @@ class CharacterSpec extends FlatSpec with Matchers with ScalaFutures with LazyLo
 		) yield char
 
 		whenReady(character) { char =>
-			char.id.toString should equal(char.id_str)
+			List(0,1) should contain(char.gender)
 		}
 	}
 }

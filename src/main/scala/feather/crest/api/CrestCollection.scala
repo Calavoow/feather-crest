@@ -16,6 +16,7 @@ case class CrestCollection[T : JsonFormat](override val href: String) extends Cr
 	def construct(auth: Option[String] = None, retries: Int = 1, params: Map[String, String] = Map.empty)
 			(implicit ec: ExecutionContext, cache: ExpiringCache[Collection[T]] = new NoCache[Collection[T]]): Stream[Future[Collection[T]]] = {
 
+		// Eagerly fetch the head, required for a Stream.
 		val head = this.follow(auth = auth, retries = retries, params = params)
 
 		/**
@@ -24,7 +25,7 @@ case class CrestCollection[T : JsonFormat](override val href: String) extends Cr
 		 * however, this would end the stream one page too soon (*on* the page that has page.next == None).
 		 * Thus I add a flag to the stream signaling one page after page.next == None that the stream can end.
 		 */
-		lazy val testStream : Stream[Future[(Collection[T], Boolean)]] = head.map(x => (x,false)) #:: testStream.map { currentPage =>
+		lazy val stream : Stream[Future[(Collection[T], Boolean)]] = head.map(x => (x,false)) #:: stream.map { currentPage =>
 			currentPage.flatMap { realizedPage =>
 				realizedPage._1.next match {
 					case None => Future.successful((realizedPage._1, true))
@@ -32,10 +33,11 @@ case class CrestCollection[T : JsonFormat](override val href: String) extends Cr
 				}
 			}
 		}.takeWhile { currentPage =>
+			// If the flag is false, keep taking pages.
 			!Await.result(currentPage, Duration.Inf)._2
 		}
 		// Remove the flag
-		testStream.map(_.map(_._1))
+		stream.map(_.map(_._1))
 	}
 
 }

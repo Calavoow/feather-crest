@@ -29,7 +29,7 @@ class CorporationSpec extends FlatSpec with Matchers with ScalaFutures with Lazy
 	}
 
 	it should "fetch killmail of page 24 of wars" in {
-		implicit val patienceConfig = PatienceConfig(timeout = 20 seconds)
+		implicit val patienceConfig = PatienceConfig(timeout = 40 seconds)
 		val futKillMails = for(
 			r <- Root.fetch();
 			wars <- r.wars.construct(auth).drop(24).head;

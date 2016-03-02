@@ -30,7 +30,7 @@ class ItemTypeSpec extends FlatSpec with Matchers with ScalaFutures with LazyLog
 			allTypes.size should equal(iTypes.head.totalCount)
 
 			// Check the first item type
-			allTypes.head should equal (NamedCrestLink[ItemType](href = "https://crest-tq.eveonline.com/types/0/", name = "#System"))
+			allTypes.head.name should equal ("#System")
 		}
 	}
 
@@ -46,7 +46,7 @@ class ItemTypeSpec extends FlatSpec with Matchers with ScalaFutures with LazyLog
 			// Check if no pagination
 			cats.items.size should equal(cats.totalCount)
 
-			cats.items.head should equal(headCat.name)
+			cats.items.head.name should equal(headCat.name)
 		}
 	}
 

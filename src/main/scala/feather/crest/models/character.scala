@@ -34,7 +34,7 @@ object Character {
 case class Character(
 	standings: TodoCrestLink,
 	bloodLine: Character.BloodLine,
-	gender_str: String,
+	waypoints: TodoCrestLink,
 	`private`: UnImplementedCrestLink,
 	channels: UnImplementedCrestLink,
 	// href: String, // Refers to this page? Left out because of 23-arity
@@ -42,10 +42,10 @@ case class Character(
 	portrait: Picture,
 	id: Int,
 	blocked: TodoCrestLink,
-	statistics: TodoCrestLink,
+	fittings: TodoCrestLink,
 	contacts: TodoCrestLink,
 	corporation: Corporation,
-	id_str: String,
+	location: TodoCrestLink,
 	mail: TodoCrestLink,
 	capsuleer: UnImplementedCrestLink,
 	vivox: UnImplementedCrestLink,
