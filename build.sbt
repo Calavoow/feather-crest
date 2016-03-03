@@ -1,6 +1,6 @@
 name := "feather-crest"
 
-version := "0.1"
+version := "0.2"
 
 organization := "eu.calavoow"
 
