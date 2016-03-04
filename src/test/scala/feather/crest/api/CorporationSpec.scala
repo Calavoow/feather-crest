@@ -29,15 +29,13 @@ import scala.concurrent.duration._
 import scala.language.postfixOps
 
 class CorporationSpec extends FlatSpec with Matchers with ScalaFutures with LazyLogging {
-	import Authentication.auth
-
 	implicit override val patienceConfig = PatienceConfig(timeout = 10 seconds)
 
 	"corporation" should "fetch alliances, alliance and corp" in {
 		val alliance = for(
-			r <- Root.authed();
-			firstAlliances <- r.alliances.construct(auth).head;
-			alli <- firstAlliances.items.head.follow(auth)
+			r <- Root.public();
+			firstAlliances <- r.alliances.construct().head;
+			alli <- firstAlliances.items.head.follow()
 		) yield (firstAlliances,alli)
 
 		whenReady(alliance) { case (alliances, alli) =>
@@ -49,11 +47,11 @@ class CorporationSpec extends FlatSpec with Matchers with ScalaFutures with Lazy
 	it should "fetch killmail of page 24 of wars" in {
 		implicit val patienceConfig = PatienceConfig(timeout = 40 seconds)
 		val futKillMails = for(
-			r <- Root.authed();
-			wars <- r.wars.construct(auth).drop(24).head;
-			war <- Future.traverse(wars.items)(_.follow(auth));
-			kills <- Future.sequence(war.map(_.killMailsLink.follow(auth))); // Fetch only the first page of killmails
-			kmList <- Future.traverse(kills.flatMap(_.items))(_.follow(auth))
+			r <- Root.public();
+			wars <- r.wars.construct().drop(24).head;
+			war <- Future.traverse(wars.items)(_.follow());
+			kills <- Future.sequence(war.map(_.killMailsLink.follow())); // Fetch only the first page of killmails
+			kmList <- Future.traverse(kills.flatMap(_.items))(_.follow())
 		) yield kmList
 
 		whenReady(futKillMails) { killLists =>
@@ -69,9 +67,9 @@ class CorporationSpec extends FlatSpec with Matchers with ScalaFutures with Lazy
 
 	it should "fetch wars" in {
 		val war = for(
-			r <- Root.authed();
-			wars <- r.wars.follow(auth);
-			w <- wars.items.head.follow(auth)
+			r <- Root.public();
+			wars <- r.wars.follow();
+			w <- wars.items.head.follow()
 		) yield w
 
 		whenReady(war) { w =>
@@ -81,11 +79,11 @@ class CorporationSpec extends FlatSpec with Matchers with ScalaFutures with Lazy
 	}
 
 	it should "get sov structures" in {
-		val root = Root.authed(auth)
+		val root = Root.public()
 
 		val structures = for(
 			r <- root;
-			structs <- r.sovereignty.structures.follow(auth)
+			structs <- r.sovereignty.structures.follow()
 		) yield { structs }
 
 		whenReady(structures) { structs =>
@@ -104,11 +102,11 @@ class CorporationSpec extends FlatSpec with Matchers with ScalaFutures with Lazy
 	}
 
 	it should "get sov campaigns" in {
-		val root = Root.authed(auth)
+		val root = Root.public()
 
 		val campaigns = for(
 			r <- root;
-			camps <- r.sovereignty.campaigns.follow(auth)
+			camps <- r.sovereignty.campaigns.follow()
 		) yield { camps }
 
 		whenReady(campaigns) { campaigns =>

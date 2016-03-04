@@ -110,7 +110,7 @@ object MarketHistory {
 	 * @return
 	 */
 	def fetch(regionLink: CrestLink[Region], typeLink: CrestLink[ItemType])
-			(auth: Option[String], retries: Int = 1)
+			(auth: Option[String] = None, retries: Int = 1)
 			(implicit ec: ExecutionContext): Future[Option[MarketHistory]] = {
 		val region = regionLink.href
 		val marketIdRegex = """.*/(\d+)/.*""".r

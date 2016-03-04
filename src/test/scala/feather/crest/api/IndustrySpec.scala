@@ -28,14 +28,12 @@ import scala.concurrent.duration._
 import scala.language.postfixOps
 
 class IndustrySpec extends FlatSpec with Matchers with ScalaFutures with LazyLogging {
-	import Authentication.auth
-
 	implicit override val patienceConfig = PatienceConfig(timeout = 10 seconds)
 
 	"industry" should "fetch IndustryFacilities" in {
 		val facilities = for(
-			r <- Root.authed();
-			fac <- r.industry.facilities.follow(auth)
+			r <- Root.public();
+			fac <- r.industry.facilities.follow()
 		) yield fac
 
 		whenReady(facilities) {facils =>
@@ -54,8 +52,8 @@ class IndustrySpec extends FlatSpec with Matchers with ScalaFutures with LazyLog
 
 	it should "fetch IndustrySystems" in {
 		val systems = for(
-			r <- Root.authed();
-			sys <- r.industry.systems.follow(auth)
+			r <- Root.public();
+			sys <- r.industry.systems.follow()
 		) yield sys
 
 		whenReady(systems) { sys =>

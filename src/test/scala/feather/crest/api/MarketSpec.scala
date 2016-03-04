@@ -36,13 +36,13 @@ class MarketSpec extends FlatSpec with Matchers with ScalaFutures with LazyLoggi
 
 	"marketTypes" should "get market data for itemtype Hammerhead II" in {
 		val ham2Orders : Future[(MarketOrders, MarketOrders)] = async {
-			// Note: no Futures! But everything outside async will stil be asynchronous.
-			val aRoot: Root = await(Root.authed())
-			val regions: Regions = await(aRoot.regions.follow(auth))
+			// Note: no Futures! But neither will the outer thread block.
+			val aRoot: Root = await(Root.public())
+			val regions: Regions = await(aRoot.regions.follow())
 			// Note that I use {{.get}} here, which could throw an exception,
 			// but simplifies this example.
 			val forge: Region = await(regions.items.find(_.name == "The Forge").get
-				.follow(auth))
+				.follow())
 
 			/**
 			 * From the type of [[Region.marketSellLink]]
@@ -52,18 +52,19 @@ class MarketSpec extends FlatSpec with Matchers with ScalaFutures with LazyLoggi
 			 * Async-await will automatically find independent asynchronous requests,
 			 * and run them in parallel.
 			 *
-			 * Note: I know that the item is on the first page of itemtypes, this saves me a little time and simplifies things.
+			 * Note: I know that the item is on the first page of itemtypes,
+			 * this saves me a little time and simplifies things.
 			 **/
-			val itemTypes = await(aRoot.itemTypes.construct(auth).head)
+			val itemTypes = await(aRoot.itemTypes.construct().head)
 			// Then we find the respective item in the list.
 			val ham2Link = itemTypes.items.find(_.name == "Hammerhead II").get
 
 
 			// Now we put everything together and get the buy and sell orders.
 			val ham2Buy : MarketOrders = await(forge.marketBuyLink(ham2Link)
-				.follow(auth))
+				.follow())
 			val ham2Sell : MarketOrders = await(forge.marketSellLink(ham2Link)
-				.follow(auth))
+				.follow())
 
 			(ham2Buy, ham2Sell)
 		}
@@ -92,7 +93,7 @@ class MarketSpec extends FlatSpec with Matchers with ScalaFutures with LazyLoggi
 	it should "get market history for Hammerhead II in Domain" in {
 		implicit val patienceConfig = PatienceConfig(timeout = 5 seconds)
 		val marketHistory = for(
-			r <- Root.authed();
+			r <- Root.authed(); // Need auth for history.
 			itemLink <- r.itemTypes.follow(auth).map(_.items.find(_.name == "Hammerhead II").get);
 			regionLink <- r.regions.follow(auth).map(_.items.find(_.name == "Domain").get);
 			history <- MarketHistory.fetch(regionLink, itemLink)(auth)
@@ -110,10 +111,10 @@ class MarketSpec extends FlatSpec with Matchers with ScalaFutures with LazyLoggi
 
 	it should "get market groups" in {
 		val marketG = for(
-			r <- Root.authed();
-			marketGroups <- r.marketGroups.follow(auth);
-			marketGroup <- marketGroups.items.head.follow(auth);
-			allMarketTypes <- Future.sequence(marketGroup.types.construct(auth))
+			r <- Root.public();
+			marketGroups <- r.marketGroups.follow();
+			marketGroup <- marketGroups.items.head.follow();
+			allMarketTypes <- Future.sequence(marketGroup.types.construct())
 		) yield (marketGroups, allMarketTypes)
 
 		whenReady(marketG) { case(marketGroups, allMarketTypes) =>
@@ -128,8 +129,8 @@ class MarketSpec extends FlatSpec with Matchers with ScalaFutures with LazyLoggi
 
 	it should "get market prices" in {
 		val prices = for(
-			r <- Root.authed();
-			marketPrices <- r.marketPrices.follow(auth)
+			r <- Root.public();
+			marketPrices <- r.marketPrices.follow()
 		) yield marketPrices
 
 		whenReady(prices) { p =>

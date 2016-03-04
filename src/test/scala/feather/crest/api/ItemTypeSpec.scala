@@ -30,15 +30,13 @@ import scala.concurrent.duration._
 import scala.language.postfixOps
 
 class ItemTypeSpec extends FlatSpec with Matchers with ScalaFutures with LazyLogging {
-	import Authentication.auth
-
 	implicit override val patienceConfig = PatienceConfig(timeout = 20 seconds)
 
-	"itemTypes" should "fetch an itemtype" in {
+	"itemTypes" should "fetch all itemtype" in {
 		val itemTypes = for(
-			r <- Root.authed();
+			r <- Root.public();
 			// Follow the link the the itemTypes page, which is paginated because it has many items (30k+).
-			itemTypes <- Future.sequence(r.itemTypes.construct(auth))
+			itemTypes <- Future.sequence(r.itemTypes.construct())
 			// Follow the link to the first [[feather.crest.models.ItemType]] page.
 		) yield itemTypes
 
@@ -54,9 +52,9 @@ class ItemTypeSpec extends FlatSpec with Matchers with ScalaFutures with LazyLog
 
 	it should "fetch an itemcategory" in {
 		val categories = for(
-			r <- Root.authed();
-			iCats <- r.itemCategories.follow(auth);
-			headCat <- iCats.items.head.follow(auth)
+			r <- Root.public();
+			iCats <- r.itemCategories.follow();
+			headCat <- iCats.items.head.follow()
 		) yield (iCats, headCat)
 
 
@@ -70,9 +68,9 @@ class ItemTypeSpec extends FlatSpec with Matchers with ScalaFutures with LazyLog
 
 	it should "fetch an itemGroup" in {
 		val groups = for(
-			r <- Root.authed();
-			gs <- Future.sequence(r.itemGroups.construct(auth));
-			headGroup <- gs.map(_.items).head.head.follow(auth)
+			r <- Root.public();
+			gs <- Future.sequence(r.itemGroups.construct());
+			headGroup <- gs.map(_.items).head.head.follow()
 		) yield (gs, headGroup)
 
 		whenReady(groups) { case (gs, headGroup) =>
@@ -89,9 +87,9 @@ class ItemTypeSpec extends FlatSpec with Matchers with ScalaFutures with LazyLog
 		implicit val patienceConfig = PatienceConfig(timeout = 5 seconds)
 		// Follow the link to the itemtype page.
 		val ham2 = for(
-			root <- Root.authed();
-			itemTypes <- root.itemTypes.follow(auth);
-			hammerhead2 <- itemTypes.items(984).follow(auth)
+			root <- Root.public();
+			itemTypes <- root.itemTypes.follow();
+			hammerhead2 <- itemTypes.items(984).follow()
 			) yield {
 					hammerhead2
 				}

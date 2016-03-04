@@ -30,16 +30,14 @@ import scala.concurrent.duration._
 import scala.language.postfixOps
 
 class UniverseSpec extends FlatSpec with Matchers with ScalaFutures with LazyLogging {
-	import Authentication.auth
-
 	implicit override val patienceConfig = PatienceConfig(timeout = 10 seconds)
 
 	behavior of "Universe"
 
 	it should "get solarsystem from the Root" in {
 		val futSystems = for(
-			r <- Root.authed();
-			systems <- r.systems.follow(auth)
+			r <- Root.public();
+			systems <- r.systems.follow()
 		) yield systems
 
 		whenReady(futSystems) { systems =>
@@ -51,14 +49,14 @@ class UniverseSpec extends FlatSpec with Matchers with ScalaFutures with LazyLog
 	it should "get regions, constellations, systems, and planets" in {
 		implicit val patienceConfig = PatienceConfig(timeout = 15 seconds)
 		val reg = for(
-			r <- Root.authed();
-			regions <- r.regions.follow(auth);
+			r <- Root.public();
+			regions <- r.regions.follow();
 			// Take only the first 10 regions and follow the links.
 			// map Seq[Future] -> Future[Seq] with Future.sequence.
-			selectedRegions <- Future.sequence(regions.items.take(10).map(_.follow(auth)));
-			constellations <- Future.sequence(selectedRegions.flatMap(_.constellations).take(10).map(_.follow(auth)));
-			systems <- Future.sequence(constellations.flatMap(_.systems).take(10).map(_.follow(auth)));
-			planets <- Future.sequence(systems.flatMap(_.planets).take(10).map(_.follow(auth)))
+			selectedRegions <- Future.sequence(regions.items.take(10).map(_.follow()));
+			constellations <- Future.sequence(selectedRegions.flatMap(_.constellations).take(10).map(_.follow()));
+			systems <- Future.sequence(constellations.flatMap(_.systems).take(10).map(_.follow()));
+			planets <- Future.sequence(systems.flatMap(_.planets).take(10).map(_.follow()))
 		) yield (regions, selectedRegions, constellations, systems, planets)
 
 
