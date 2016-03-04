@@ -29,6 +29,31 @@ internally feather-crest limits the number of parallel connections to the maximu
 So you don't have to worry about exceeding the connection limit by setting up many parallel requests,
 feather-crest does that for you.
 
+## Installation
+The installation mainly consists of installing SBT, a build tool for Scala projects.
+[The installation instructions](http://www.scala-sbt.org/release/docs/Setup.html) are publicly available
+for Linux, Mac and Windows or any system that runs the Java Virtual Machine.
+For tests involving the Authed CREST, it is required to create a file `src/test/resources/auth.txt`
+with just the authentication token in it, otherwise you will get errors when authenticating.
+Once installed you can compile or test the project through
+```sh
+$ cd feather-crest
+$ sbt
+> compile
+> test
+```
+At least until this is published to Maven Central,
+you can install the library locally to make it available as dependency with
+```sh
+$ sbt
+> publishLocal
+```
+
+And then add a dependency with
+```
+libraryDependencies += "eu.calavoow" %% "feather-crest" % "0.2"
+```
+
 ## Examples
 Because of static typing we can navigate the interface in a checked manner.
 A session should usually start with fetching the Root object.
