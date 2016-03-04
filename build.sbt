@@ -12,7 +12,7 @@ homepage := Some(new URL("https://github.com/calavoow/feather-crest"))
 
 startYear := Some(2015)
 
-licenses := Seq("AGPL" -> new URL("http://www.gnu.org/licenses/agpl-3.0.txt"))
+licenses := Seq("LGPLv3" -> new URL("http://www.gnu.org/licenses/lgpl.txt"))
 
 scalaVersion := "2.11.7"
 
