@@ -12,8 +12,11 @@ case class Position(
 	z: Long
 )
 
+/**
+ * Regions of the universe, not paginated.
+ */
 case class Regions(totalCount_str: String,
-	items: List[NamedCrestLink[Region]],
+	items: List[IdNamedCrestLink[Region]],
 	pageCount: Int,
 	pageCount_str: String,
 	totalCount: Int

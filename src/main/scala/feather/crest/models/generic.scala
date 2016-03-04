@@ -23,7 +23,7 @@ case class UncompletedCrestLink(href: String)
 case class NamedCrestLink[T: JsonReader](override val href: String, name: String) extends CrestLink[T](href)
 
 /**
- * A [[CrestLink]] which has an [[id]] of the thing being linked.
+ * A [[feather.crest.api.CrestLink]] which has an [[id]] of the thing being linked.
  *
  * @param id_str The id stringified.
  * @param href The Crest URL to the Crest instance.
