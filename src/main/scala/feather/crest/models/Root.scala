@@ -87,7 +87,7 @@ case class Root(
 	itemCategories: CrestLink[ItemCategories],
 	regions: CrestLink[Regions],
 	marketGroups: CrestLink[MarketGroups],
-	systems: CrestLink[Collection[SolarSystem]], // not paginated
+	systems: CrestLink[Collection[IdNamedCrestLink[SolarSystem]]], // not paginated
 	sovereignty: Root.Sovereignty,
 	tournaments: CrestLink[Tournaments],
 	map: UnImplementedCrestLink,

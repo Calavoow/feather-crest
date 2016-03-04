@@ -140,7 +140,7 @@ object CrestLink {
 						itemCategories = fieldMap("itemCategories").convertTo[CrestLink[ItemCategories]],
 						regions = fieldMap("regions").convertTo[CrestLink[Regions]],
 						marketGroups = fieldMap("marketGroups").convertTo[CrestLink[MarketGroups]],
-						systems = fieldMap("systems").convertTo[CrestLink[Collection[SolarSystem]]],
+						systems = fieldMap("systems").convertTo[CrestLink[Collection[IdNamedCrestLink[SolarSystem]]]],
 						sovereignty = fieldMap("sovereignty").convertTo[Root.Sovereignty],
 						tournaments = fieldMap("tournaments").convertTo[CrestLink[Tournaments]],
 						map = fieldMap("map").convertTo[UnImplementedCrestLink],
@@ -365,7 +365,7 @@ class CrestLink[T: JsonReader](val href: String) extends LazyLogging {
 		val parsedResult = responseFut.map { response ⇒
 			response.getStatusCode match {
 				case 200 =>
-					logger.debug(s"Response status of $href: ${response.getStatusCode}: ${response.getStatusText}")
+					logger.debug(s"Response status ${response.getStatusCode}: ${response.getStatusText} for\n$href with params ${params.mkString("Map(",",",")")}")
 					val cacheTime = response.getHeader("Access-Control-Max-Age").toLong
 					val cacheDuration = Duration(cacheTime, TimeUnit.SECONDS)
 					val jsonAst = response.getResponseBody.parseJson
