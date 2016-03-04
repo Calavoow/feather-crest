@@ -19,7 +19,7 @@ class MarketSpec extends FlatSpec with Matchers with ScalaFutures with LazyLoggi
 	"marketTypes" should "get market data for itemtype Hammerhead II" in {
 		val ham2Orders : Future[(MarketOrders, MarketOrders)] = async {
 			// Note: no Futures! But everything outside async will stil be asynchronous.
-			val aRoot: Root = await(Root.fetch())
+			val aRoot: Root = await(Root.authed())
 			val regions: Regions = await(aRoot.regions.follow(auth))
 			// Note that I use {{.get}} here, which could throw an exception,
 			// but simplifies this example.
@@ -74,7 +74,7 @@ class MarketSpec extends FlatSpec with Matchers with ScalaFutures with LazyLoggi
 	it should "get market history for Hammerhead II in Domain" in {
 		implicit val patienceConfig = PatienceConfig(timeout = 5 seconds)
 		val marketHistory = for(
-			r <- Root.fetch();
+			r <- Root.authed();
 			itemLink <- r.itemTypes.follow(auth).map(_.items.find(_.name == "Hammerhead II").get);
 			regionLink <- r.regions.follow(auth).map(_.items.find(_.name == "Domain").get);
 			history <- MarketHistory.fetch(regionLink, itemLink)(auth)
@@ -92,7 +92,7 @@ class MarketSpec extends FlatSpec with Matchers with ScalaFutures with LazyLoggi
 
 	it should "get market groups" in {
 		val marketG = for(
-			r <- Root.fetch();
+			r <- Root.authed();
 			marketGroups <- r.marketGroups.follow(auth);
 			marketGroup <- marketGroups.items.head.follow(auth);
 			allMarketTypes <- Future.sequence(marketGroup.types.construct(auth))
@@ -110,7 +110,7 @@ class MarketSpec extends FlatSpec with Matchers with ScalaFutures with LazyLoggi
 
 	it should "get market prices" in {
 		val prices = for(
-			r <- Root.fetch();
+			r <- Root.authed();
 			marketPrices <- r.marketPrices.follow(auth)
 		) yield marketPrices
 

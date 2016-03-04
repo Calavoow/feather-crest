@@ -18,7 +18,7 @@ class ItemTypeSpec extends FlatSpec with Matchers with ScalaFutures with LazyLog
 
 	"itemTypes" should "fetch an itemtype" in {
 		val itemTypes = for(
-			r <- Root.fetch();
+			r <- Root.authed();
 			// Follow the link the the itemTypes page, which is paginated because it has many items (30k+).
 			itemTypes <- Future.sequence(r.itemTypes.construct(auth))
 			// Follow the link to the first [[feather.crest.models.ItemType]] page.
@@ -36,7 +36,7 @@ class ItemTypeSpec extends FlatSpec with Matchers with ScalaFutures with LazyLog
 
 	it should "fetch an itemcategory" in {
 		val categories = for(
-			r <- Root.fetch();
+			r <- Root.authed();
 			iCats <- r.itemCategories.follow(auth);
 			headCat <- iCats.items.head.follow(auth)
 		) yield (iCats, headCat)
@@ -52,7 +52,7 @@ class ItemTypeSpec extends FlatSpec with Matchers with ScalaFutures with LazyLog
 
 	it should "fetch an itemGroup" in {
 		val groups = for(
-			r <- Root.fetch();
+			r <- Root.authed();
 			gs <- Future.sequence(r.itemGroups.construct(auth));
 			headGroup <- gs.map(_.items).head.head.follow(auth)
 		) yield (gs, headGroup)
@@ -71,9 +71,9 @@ class ItemTypeSpec extends FlatSpec with Matchers with ScalaFutures with LazyLog
 		implicit val patienceConfig = PatienceConfig(timeout = 5 seconds)
 		// Follow the link to the itemtype page.
 		val ham2 = for(
-				root <- Root.fetch();
-				itemTypes <- root.itemTypes.follow(auth);
-				hammerhead2 <- itemTypes.items(984).follow(auth)
+			root <- Root.authed();
+			itemTypes <- root.itemTypes.follow(auth);
+			hammerhead2 <- itemTypes.items(984).follow(auth)
 			) yield {
 					hammerhead2
 				}

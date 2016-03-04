@@ -361,11 +361,9 @@ class CrestLink[T: JsonReader](val href: String) extends LazyLogging {
 							logger.error(s"Error deserializing $href")
 							throw ex
 					}
-				case 401 =>
-					val message = s"Unauthorized authentication token. CREST response body: ${response.getResponseBody}"
-					logger.warn(message)
-					throw CrestCommunicationException(401, message)
-
+				case code =>
+					logger.warn(s"Failure code: $code, message:\n${response.getResponseBody}")
+					throw CrestCommunicationException(code, s"${response.getResponseBody}")
 			}
 		}
 

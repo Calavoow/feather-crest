@@ -16,10 +16,19 @@ object Root {
 	 * CrestLink[Root](customEndpoint)
 	 * ```
 	 */
-	def fetch(auth: Option[String] = None)(implicit ec: ExecutionContext): Future[Root] = {
-		// The only "static" CREST URL.
+	def authed(auth: Option[String] = None)(implicit ec: ExecutionContext): Future[Root] = {
+		// The only "static" URL for the authed CREST.
 		val endpoint = "https://crest-tq.eveonline.com/"
 		CrestLink[Root](endpoint).follow(auth)
+	}
+
+	/**
+	 * Connect to the public CREST endpoint.
+	 */
+	def public()(implicit ec: ExecutionContext): Future[Root] = {
+		// The only "static" URL for the public CREST.
+		val endpoint = "https://public-crest.eveonline.com/"
+		CrestLink[Root](endpoint).follow()
 	}
 
 	case class Motd(dust: Link,

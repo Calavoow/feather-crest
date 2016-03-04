@@ -19,7 +19,7 @@ class UniverseSpec extends FlatSpec with Matchers with ScalaFutures with LazyLog
 	"Universe" should "get regions, constellations, systems, and planets" in {
 		implicit val patienceConfig = PatienceConfig(timeout = 15 seconds)
 		val reg = for(
-			r <- Root.fetch();
+			r <- Root.authed();
 			regions <- r.regions.follow(auth);
 			// Take only the first 10 regions and follow the links.
 			// map Seq[Future] -> Future[Seq] with Future.sequence.

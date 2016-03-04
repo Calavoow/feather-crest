@@ -15,7 +15,7 @@ class CharacterSpec extends FlatSpec with Matchers with ScalaFutures with LazyLo
 	implicit override val patienceConfig = PatienceConfig(timeout = 10.seconds)
 
 	"character" should "fetch user Decode and Character" in {
-		val root = Root.fetch()
+		val root = Root.authed()
 		val character = for(
 			r <- root;
 			decode <- r.decode.follow(auth);
@@ -29,7 +29,7 @@ class CharacterSpec extends FlatSpec with Matchers with ScalaFutures with LazyLo
 
 	it should "parse location data" in {
 		val loc = for(
-			r <- Root.fetch();
+			r <- Root.authed();
 			decode <- r.decode.follow(auth);
 			char <- decode.character.follow(auth);
 			location <- char.location.follow(auth)
@@ -49,7 +49,7 @@ class CharacterSpec extends FlatSpec with Matchers with ScalaFutures with LazyLo
 		)
 
 		val post = for(
-			r <- Root.fetch();
+			r <- Root.authed();
 			dec <- r.decode.follow(auth);
 			character <- dec.character.follow(auth);
 			posted <- character.waypoints.post(waypoints, auth=auth)

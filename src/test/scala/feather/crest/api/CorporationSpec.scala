@@ -17,7 +17,7 @@ class CorporationSpec extends FlatSpec with Matchers with ScalaFutures with Lazy
 
 	"corporation" should "fetch alliances, alliance and corp" in {
 		val alliance = for(
-			r <- Root.fetch();
+			r <- Root.authed();
 			firstAlliances <- r.alliances.construct(auth).head;
 			alli <- firstAlliances.items.head.follow(auth)
 		) yield (firstAlliances,alli)
@@ -31,7 +31,7 @@ class CorporationSpec extends FlatSpec with Matchers with ScalaFutures with Lazy
 	it should "fetch killmail of page 24 of wars" in {
 		implicit val patienceConfig = PatienceConfig(timeout = 40 seconds)
 		val futKillMails = for(
-			r <- Root.fetch();
+			r <- Root.authed();
 			wars <- r.wars.construct(auth).drop(24).head;
 			war <- Future.traverse(wars.items)(_.follow(auth));
 			kills <- Future.sequence(war.map(_.killMailsLink.follow(auth))); // Fetch only the first page of killmails
@@ -51,7 +51,7 @@ class CorporationSpec extends FlatSpec with Matchers with ScalaFutures with Lazy
 
 	it should "fetch wars" in {
 		val war = for(
-			r <- Root.fetch();
+			r <- Root.authed();
 			wars <- r.wars.follow(auth);
 			w <- wars.items.head.follow(auth)
 		) yield w
@@ -63,7 +63,7 @@ class CorporationSpec extends FlatSpec with Matchers with ScalaFutures with Lazy
 	}
 
 	it should "get sov structures" in {
-		val root = Root.fetch(auth)
+		val root = Root.authed(auth)
 
 		val structures = for(
 			r <- root;
@@ -86,7 +86,7 @@ class CorporationSpec extends FlatSpec with Matchers with ScalaFutures with Lazy
 	}
 
 	it should "get sov campaigns" in {
-		val root = Root.fetch(auth)
+		val root = Root.authed(auth)
 
 		val campaigns = for(
 			r <- root;

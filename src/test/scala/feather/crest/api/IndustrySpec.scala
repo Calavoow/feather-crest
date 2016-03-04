@@ -16,7 +16,7 @@ class IndustrySpec extends FlatSpec with Matchers with ScalaFutures with LazyLog
 
 	"industry" should "fetch IndustryFacilities" in {
 		val facilities = for(
-			r <- Root.fetch();
+			r <- Root.authed();
 			fac <- r.industry.facilities.follow(auth)
 		) yield fac
 
@@ -36,7 +36,7 @@ class IndustrySpec extends FlatSpec with Matchers with ScalaFutures with LazyLog
 
 	it should "fetch IndustrySystems" in {
 		val systems = for(
-			r <- Root.fetch();
+			r <- Root.authed();
 			sys <- r.industry.systems.follow(auth)
 		) yield sys
 

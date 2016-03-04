@@ -34,7 +34,7 @@ class ModelOnceSpec extends FlatSpec with Matchers with LazyLogging {
 	ignore should "should not contain a second page in the first 2000 market orders" in {
 		implicit val patienceConfig = PatienceConfig(timeout = 20 minutes)
 		// As usual get the Root first.
-		val root = Root.fetch(None)
+		val root = Root.authed(None)
 
 		val theForge: Future[Region] = async {
 			// Note: no Futures! But everything outside async will stil be asynchronous.
