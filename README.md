@@ -198,6 +198,8 @@ Look in the `src/test/scala` folder for some running examples.
 They look slightly different than the previous examples, because of the way test suites handles Futures.
 It pays off to get used to `map` and `flatMap` first, so you know how things work,
 and then switch to for-constructs (which just use `map` and `flatMap`) or `scala-async`.
+Also have a look at a [project using feather-crest](https://github.com/Calavoow/BringMeTo),
+which is a website that uses many of the features of feather-crest to route players.
 
 ## Implementation
 Models that have been implemented can be found in `src/main/scala/feather/crest/models`.
